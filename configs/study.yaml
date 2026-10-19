@@ -19,3 +19,4 @@ risk_tiers:          # provisional; applied to calibrated P(DEP) in Phase 4
   low: [0.0, 0.33]
   moderate: [0.33, 0.66]
   high: [0.66, 1.0]
+qc_flagged: ["028", "029", "030", "032", "071", "085", "100"]   # Phase 2 QC; kept, sensitivity rerun without them

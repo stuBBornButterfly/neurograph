@@ -1,0 +1,24 @@
+input_glob: /kaggle/input/**/derivatives/features/features.csv   # Phase 3 notebook output
+cv:
+  n_splits: 5
+  n_repeats: 10                # 5-fold CV repeated with 10 different shuffles = 50 folds
+  random_state: 97
+logreg:
+  Cs: 10                       # regularisation strengths tried in the inner CV
+  inner_cv: 5
+  max_iter: 5000
+threshold: 0.5
+feature_sets:                  # regex on features.csv columns; DE left out (same as log power)
+  eeg_closed: '^closed_(delta|theta|alpha|beta|gamma)_(abs|rel)_|^closed_faa_|^iaf_hz$'
+  eeg_all: '^(closed|open)_(delta|theta|alpha|beta|gamma)_(abs|rel)_|^(closed|open)_faa_|^iaf_hz$'
+models:                        # name: feature set (null = none), add sex, subject subset
+  majority:        {features: null, sex: false, subset: all, dummy: true}
+  sex_only:        {features: null, sex: true, subset: all}
+  eeg_closed:      {features: eeg_closed, sex: false, subset: all}
+  eeg_all:         {features: eeg_all, sex: false, subset: all}
+  sex_eeg_closed:  {features: eeg_closed, sex: true, subset: all}
+  sex_eeg_noflag:  {features: eeg_closed, sex: true, subset: no_flagged}
+  women_eeg:       {features: eeg_closed, sex: false, subset: female}
+paired:                        # [with EEG, without EEG] on the same folds
+  - [sex_eeg_closed, sex_only]
+  - [eeg_closed, majority]
