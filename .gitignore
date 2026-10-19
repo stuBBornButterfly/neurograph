@@ -1,0 +1,22 @@
+# data and outputs
+data/
+mlruns/
+reports/mne_reports/
+qdrant_storage/
+*.fif
+*.edf
+*.set
+*.vhdr
+*.vmrk
+*.eeg
+# secrets
+.env
+# python
+.venv/
+__pycache__/
+*.egg-info/
+.ipynb_checkpoints/
+.pytest_cache/
+# model files
+*.gguf
+*.safetensors

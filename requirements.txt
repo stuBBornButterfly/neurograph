@@ -1,0 +1,8 @@
+# installed on top of Kaggle's image (torch, mne, numpy, sklearn, xgboost, shap already there)
+mne-bids
+mne-icalabel
+autoreject
+openneuro-py
+braindecode
+mlflow
+neo4j
