@@ -72,3 +72,22 @@ def eog_verdict(eog: dict[str, float], margin: float = 0.1) -> str:
     if blink < -margin and side < -margin:
         return "looks SWAPPED"
     return "unclear"
+
+
+
+def plot_before_after(before: mne.io.BaseRaw, after: mne.io.BaseRaw, chans: list[str],
+                      t0: float, dur: float, out_path: Path) -> None:
+    sf = before.info["sfreq"]
+    start, stop = int(t0 * sf), int((t0 + dur) * sf)
+    t = np.arange(stop - start) / sf + t0
+    fig, axes = plt.subplots(len(chans), 1, sharex=True, figsize=(11, 1.3 * len(chans)))
+    for ax, ch in zip(axes, chans):
+        ax.plot(t, before.get_data(picks=[ch], start=start, stop=stop)[0] * 1e6, lw=0.6, c="0.6", label="before")
+        ax.plot(t, after.get_data(picks=[ch], start=start, stop=stop)[0] * 1e6, lw=0.6, c="tab:blue", label="after")
+        ax.set_ylabel(f"{ch}\nµV", fontsize=8)
+    axes[0].legend(loc="upper right", fontsize=8)
+    axes[-1].set_xlabel("time (s, after crop)")
+    fig.tight_layout()
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_path, dpi=110)
+    plt.close(fig)

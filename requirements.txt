@@ -6,3 +6,4 @@ openneuro-py
 braindecode
 mlflow
 neo4j
+python-picard

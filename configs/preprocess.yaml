@@ -8,3 +8,10 @@ bads:
   min_corr: 0.4                # best correlation with any other channel must exceed this
   lf_band: [1, 40]
   hf_band: [40, 100]
+ica:
+  method: picard               # extended + non-orthogonal = same model ICLabel was trained on
+  n_components: 30
+  decim: 3                     # fit on every 3rd sample; applied to all samples
+  random_state: 97
+  reject_labels: [eye blink, muscle artifact, heart beat, line noise, channel noise]
+  min_prob: 0.7
