@@ -17,3 +17,22 @@ sanity:
   posterior: [O1, OZ, O2]
   frontal: [F3, FZ, F4]
   inspect: ["030", "032"]      # QC-flagged for low alpha ratio
+iaf_min_peak_db: 1.0           # below this there is no real alpha peak -> IAF missing
+faa_pairs:                     # [right, left]; FAA = ln(alpha right) - ln(alpha left)
+  - [F4, F3]
+  - [F8, F7]
+  - [AF4, AF3]
+regions:                       # first matching channel-name prefix wins; null = not used
+  - [FP, null]                 # frontal pole: eye residue
+  - [M, null]                  # mastoids: reference sites, often poor contact
+  - [AF, frontal]
+  - [FC, central]
+  - [FT, temporal]
+  - [F, frontal]
+  - [TP, temporal]
+  - [T, temporal]
+  - [CP, parietal]
+  - [C, central]
+  - [PO, occipital]
+  - [P, parietal]
+  - [O, occipital]

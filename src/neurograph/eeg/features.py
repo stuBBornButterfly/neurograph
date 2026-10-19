@@ -55,3 +55,36 @@ def alpha_peak(psd_ch: np.ndarray, freqs: np.ndarray, rng: list[float]) -> tuple
     k = np.argmax(psd_ch[m])
     flank = psd_ch[((freqs >= rng[0] - 2) & (freqs < rng[0])) | ((freqs > rng[1]) & (freqs <= rng[1] + 2))]
     return float(freqs[m][k]), float(10 * np.log10(psd_ch[m][k] / flank.mean()))
+
+
+def region_map(ch_names: list[str], prefixes: list[list]) -> dict[str, list[str]]:
+    out: dict[str, list[str]] = {}
+    for ch in ch_names:
+        for prefix, region in prefixes:
+            if ch.upper().startswith(prefix):
+                if region:
+                    out.setdefault(region, []).append(ch)
+                break
+    return out
+
+
+def faa(alpha_abs: np.ndarray, ch_names: list[str], pairs: list[list[str]]) -> dict[str, float]:
+    # alpha_abs: (condition, channel) in µV²; positive = more right alpha = more left activity
+    return {f"{cond}_faa_{r}_{l}": float(np.log(alpha_abs[c, ch_names.index(r)])
+                                         - np.log(alpha_abs[c, ch_names.index(l)]))
+            for c, cond in enumerate(CONDITIONS) for r, l in pairs}
+
+
+def regional_row(absolute: np.ndarray, relative: np.ndarray, ch_names: list[str],
+                 regions: dict[str, list[str]], bands: list[str]) -> dict[str, float]:
+    row = {}
+    for c, cond in enumerate(CONDITIONS):
+        for b, band in enumerate(bands):
+            for region, chs in regions.items():
+                idx = [ch_names.index(ch) for ch in chs]
+                p = absolute[c, idx, b]
+                row[f"{cond}_{band}_abs_{region}"] = float(np.log10(p).mean())
+                row[f"{cond}_{band}_rel_{region}"] = float(relative[c, idx, b].mean())
+                # differential entropy of a Gaussian band signal: 0.5 ln(2πe·power)
+                row[f"{cond}_{band}_de_{region}"] = float((0.5 * np.log(2 * np.pi * np.e * p)).mean())
+    return row
