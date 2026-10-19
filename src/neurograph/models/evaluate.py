@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from sklearn.calibration import CalibratedClassifierCV
 from sklearn.dummy import DummyClassifier
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegressionCV
@@ -8,6 +9,8 @@ from sklearn.model_selection import StratifiedGroupKFold
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from xgboost import XGBClassifier
+
+from neurograph.models.confounds import SexResidualizer
 
 
 def make_splits(y: np.ndarray, groups: np.ndarray, n_splits: int, n_repeats: int,
@@ -21,13 +24,19 @@ def make_splits(y: np.ndarray, groups: np.ndarray, n_splits: int, n_repeats: int
 
 
 def build_model(kind: str, cfg: dict):
+    if kind.endswith("_cal"):  # Platt scaling learned by an inner CV on the training fold
+        cal = cfg["calibration"]
+        return CalibratedClassifierCV(build_model(kind[:-4], cfg), method=cal["method"], cv=cal["cv"])
     if kind == "dummy":
         return DummyClassifier(strategy="prior")
     if kind == "xgb":  # shallow trees, fixed settings: too few people to tune them honestly
         return XGBClassifier(eval_metric="logloss", **cfg["xgb"])
     # imputer, scaler and C are all fitted on the training fold only
     lr = cfg["logreg"]
-    return make_pipeline(SimpleImputer(strategy="median"), StandardScaler(),
+    steps = [SimpleImputer(strategy="median")]
+    if kind == "logreg_sexadj":  # remove what sex predicts from every feature, then drop sex
+        steps.append(SexResidualizer())
+    return make_pipeline(*steps, StandardScaler(),
                          LogisticRegressionCV(Cs=lr["Cs"], cv=lr["inner_cv"], scoring="roc_auc",
                                               class_weight="balanced", max_iter=lr["max_iter"]))
 

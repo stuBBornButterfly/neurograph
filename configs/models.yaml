@@ -49,3 +49,22 @@ explain:                       # step 4.2
     random_state: 97
   coef_model: eeg_all_lr       # logistic-regression weights, averaged over the 50 folds
   shap_model: eeg_all_xgb      # tree SHAP on the test folds
+calibration:
+  method: sigmoid              # Platt scaling; isotonic needs more people
+  cv: 5
+  bins: 10
+tiers:                         # step 4.3
+  models:
+    eeg_closed_lr:      {features: eeg_closed, sex: false, subset: all, kind: logreg}
+    eeg_all_lr:         {features: eeg_all, sex: false, subset: all, kind: logreg}
+    eeg_closed_sexadj:  {features: eeg_closed, sex: true, subset: all, kind: logreg_sexadj}
+    eeg_all_sexadj:     {features: eeg_all, sex: true, subset: all, kind: logreg_sexadj}
+    sex_eeg_closed:     {features: eeg_closed, sex: true, subset: all, kind: logreg}
+    sex_eeg_closed_cal: {features: eeg_closed, sex: true, subset: all, kind: logreg_cal}
+    eeg_all_cal:        {features: eeg_all, sex: false, subset: all, kind: logreg_cal}
+  paired:
+    - [eeg_closed_sexadj, eeg_closed_lr]
+    - [eeg_all_sexadj, eeg_all_lr]
+    - [sex_eeg_closed_cal, sex_eeg_closed]
+  calibrate_compare: [sex_eeg_closed, sex_eeg_closed_cal, eeg_all_lr, eeg_all_cal]
+  tier_model: sex_eeg_closed_cal    # headline model, calibrated
