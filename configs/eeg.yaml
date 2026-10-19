@@ -1,0 +1,5 @@
+
+task: Rest
+main_run: "01"
+eog_channels: [HEOG, VEOG]
+line_freq: 60

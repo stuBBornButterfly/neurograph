@@ -4,3 +4,4 @@ dataset:
 paths:
   data_root: /kaggle/working/data
   bids_dir: /kaggle/working/data/ds003478
+  figures_dir: reports/figures
