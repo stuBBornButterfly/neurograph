@@ -1,11 +1,21 @@
 exclude:
   "038": authors excluded (BDI unstable between screening and lab visit)
+min_blocks_per_condition: 2   # need >=2 eyes-closed and >=2 eyes-open blocks in run-01
 design_groups:   # Cavanagh et al. 2019: stable BDI <7 (CTL) or >=13 (DEP)
   ctl_max: 6
   dep_min: 13
-bdi_ii_tiers:    # standard BDI-II cut-offs, for comparison
+between_label: CTL   # BDI 7-12 at lab visit; the paper counted them among its controls
+severity_bands:      # within DEP, used later to check risk tiers
+  elevated_min: 13
+  high_min: 20
+bdi_ii_tiers:        # standard BDI-II cut-offs, for comparison only
   minimal: [0, 13]
   mild: [14, 19]
   moderate: [20, 28]
   severe: [29, 63]
 stai_cutoffs: [40, 45]
+stai_high: 45
+risk_tiers:          # provisional; applied to calibrated P(DEP) in Phase 4
+  low: [0.0, 0.33]
+  moderate: [0.33, 0.66]
+  high: [0.66, 1.0]

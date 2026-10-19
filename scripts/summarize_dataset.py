@@ -22,6 +22,8 @@ def run_info(eeg_dir: Path, sub: str, run: str, task: str) -> dict:
     return {f"run{run}": True,
             f"run{run}_dur_s": round(float(info.get("RecordingDuration", np.nan)), 1),
             f"run{run}_blocks": len(blocks),
+            f"run{run}_n_closed": int((blocks["eyes"] == "closed").sum()),
+            f"run{run}_n_open": int((blocks["eyes"] == "open").sum()),
             f"run{run}_order": "".join("C" if e == "closed" else "O" for e in blocks["eyes"]),
             f"run{run}_min_markers": int(blocks["n"].min()) if len(blocks) else 0}
 
@@ -43,16 +45,28 @@ def bdi_tier(bdi: float, tiers: dict) -> str:
     return "out_of_range"
 
 
-def exclusion_reason(row: pd.Series, manual: dict) -> str:
+def exclusion_reason(row: pd.Series, manual: dict, min_blocks: int) -> str:
     if row["sub"] in manual:
         return manual[row["sub"]]
     if np.isnan(row["BDI"]):
         return "missing BDI"
     if not row["run01"]:
         return "no run-01"
-    if row["run01_blocks"] != 6:
-        return f"run-01 has {row['run01_blocks']} blocks"
+    if min(row["run01_n_closed"], row["run01_n_open"]) < min_blocks:
+        return f"run-01 has {row['run01_n_closed']} closed / {row['run01_n_open']} open blocks"
     return ""
+
+
+def make_labels(use: pd.DataFrame, study: dict) -> pd.DataFrame:
+    cols = ["participant_id", "sub", "sex", "age", "BDI", "STAI", "group", "bdi_ii_tier",
+            "run01_order", "run01_n_closed", "run01_n_open", "run02"]
+    out = use[cols].copy()
+    out["y_dep"] = (out["group"] == "DEP").astype(int)
+    out["stai_high"] = (out["STAI"] >= study["stai_high"]).astype(int)
+    sb = study["severity_bands"]
+    out["dep_severity"] = np.select([(out["y_dep"] == 1) & (out["BDI"] >= sb["high_min"]),
+                                     out["y_dep"] == 1], ["high", "elevated"], "low")
+    return out.reset_index(drop=True)
 
 
 def plot_scores(df: pd.DataFrame, out_path: Path, ctl_max: int, dep_min: int) -> None:
@@ -84,44 +98,43 @@ def main() -> None:
     runs = [{**run_info(bids / f"sub-{s}" / "eeg", s, "01", eeg["task"]),
              **run_info(bids / f"sub-{s}" / "eeg", s, "02", eeg["task"])} for s in df["sub"]]
     df = pd.concat([df, pd.DataFrame(runs)], axis=1)
-    df["group"] = df["BDI"].apply(lambda b: bdi_group(b, g["ctl_max"], g["dep_min"]))
+    df["group_raw"] = df["BDI"].apply(lambda b: bdi_group(b, g["ctl_max"], g["dep_min"]))
+    df["group"] = df["group_raw"].replace({"between": study["between_label"]})
     df["bdi_ii_tier"] = df["BDI"].apply(lambda b: bdi_tier(b, study["bdi_ii_tiers"]))
-    df["excluded"] = df.apply(lambda r: exclusion_reason(r, study["exclude"]), axis=1)
+    df["excluded"] = df.apply(lambda r: exclusion_reason(r, study["exclude"],
+                                                        study["min_blocks_per_condition"]), axis=1)
     use = df[df["excluded"] == ""]
+    labels = make_labels(use, study)
 
     out_dir = Path(paths["paths"]["derivatives_dir"])
     out_dir.mkdir(parents=True, exist_ok=True)
     df.to_csv(out_dir / "subject_summary.csv", index=False)
+    labels.to_csv(out_dir / "labels.csv", index=False)
     fig_path = REPO_ROOT / paths["paths"]["figures_dir"] / "participants_bdi_stai.png"
-    plot_scores(use, fig_path, g["ctl_max"], g["dep_min"])
+    plot_scores(labels, fig_path, g["ctl_max"], g["dep_min"])
 
-    r01 = df[df["run01"] == True]
     print(f"\n== recordings | commit {git_hash()} ==")
     print(f"participants: {len(df)} | run-01: {int(df['run01'].sum())} | run-02: {int(df['run02'].sum())}")
-    print(f"run-01 blocks per subject: {r01['run01_blocks'].value_counts().to_dict()}")
-    print(f"run-01 duration s: min {r01['run01_dur_s'].min()} | median {r01['run01_dur_s'].median()} | max {r01['run01_dur_s'].max()}")
-    print(f"run-01 fewest markers in any block: {int(r01['run01_min_markers'].min())}")
-    print(f"run-01 orders: {r01['run01_order'].value_counts().to_dict()}")
-    print(f"no run-02: {df.loc[df['run02'] != True, 'participant_id'].tolist()}")
+    print(f"run-01 orders: {df['run01_order'].value_counts().to_dict()}")
 
     print("\n== exclusions ==")
     for _, r in df[df["excluded"] != ""].iterrows():
         print(f"  {r['participant_id']}: {r['excluded']}")
-    print(f"usable: {len(use)}")
+    moved = use.loc[use["group_raw"] == "between", "participant_id"].tolist()
+    print(f"relabelled between -> {study['between_label']}: {moved}")
 
-    print("\n== labels (usable subjects) ==")
-    print(f"sex (1=female, 2=male): {use['sex'].value_counts().to_dict()} | age median {use['age'].median()}")
-    print(f"design groups: {use['group'].value_counts().to_dict()}")
-    print(f"BDI-II tiers: {use['bdi_ii_tier'].value_counts().reindex(list(study['bdi_ii_tiers'])).fillna(0).astype(int).to_dict()}")
-    print(f"BDI in DEP: {use.loc[use['group'] == 'DEP', 'BDI'].describe()[['min', '50%', 'max']].to_dict()}")
-    for c in study["stai_cutoffs"]:
-        print(f"STAI >= {c}: {int((use['STAI'] >= c).sum())} "
-              f"(CTL {int(((use['STAI'] >= c) & (use['group'] == 'CTL')).sum())}, "
-              f"DEP {int(((use['STAI'] >= c) & (use['group'] == 'DEP')).sum())})")
-    print(f"STAI median: CTL {use.loc[use['group'] == 'CTL', 'STAI'].median()} | DEP {use.loc[use['group'] == 'DEP', 'STAI'].median()}")
-    rho, p = spearmanr(use["BDI"], use["STAI"], nan_policy="omit")
+    print("\n== final labels ==")
+    n = len(labels)
+    counts = labels["y_dep"].value_counts().to_dict()
+    print(f"included: {n} | CTL (y=0): {counts.get(0, 0)} | DEP (y=1): {counts.get(1, 0)} | "
+          f"majority baseline: {max(counts.values()) / n:.1%}")
+    print(f"dep_severity: {labels['dep_severity'].value_counts().to_dict()}")
+    print(f"stai_high by group: {pd.crosstab(labels['group'], labels['stai_high']).to_dict('index')}")
+    print(f"sex by group (1=F, 2=M): {pd.crosstab(labels['group'], labels['sex']).to_dict('index')}")
+    print(f"age median by group: {labels.groupby('group')['age'].median().to_dict()}")
+    rho, p = spearmanr(labels["BDI"], labels["STAI"], nan_policy="omit")
     print(f"BDI~STAI Spearman rho = {rho:.2f} (p = {p:.1e})")
-    print(f"\nsaved: {out_dir / 'subject_summary.csv'} | {fig_path.relative_to(REPO_ROOT)}")
+    print(f"\nsaved: {out_dir / 'labels.csv'} ({n} rows) | {out_dir / 'subject_summary.csv'}")
 
 
 if __name__ == "__main__":

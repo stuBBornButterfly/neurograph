@@ -2,7 +2,6 @@ dataset:
   id: ds003478
   version: "1.1.0"
 paths:
-  data_root: /kaggle/working/data
-  bids_dir: /kaggle/working/data/ds003478
-  derivatives_dir: /kaggle/working/data/derivatives
+  bids_dir: /tmp/ds003478                     # raw, scratch: re-downloaded each session
+  derivatives_dir: /kaggle/working/derivatives  # our results: saved with the notebook
   figures_dir: reports/figures
