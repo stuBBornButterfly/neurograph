@@ -7,10 +7,9 @@ import pandas as pd
 from neurograph.config import git_hash, load_config
 
 
-def download_subset(dataset: str, tag: str, target: Path, subjects: list[str]) -> None:
+def download_subset(dataset: str, tag: str, target: Path, include: list[str]) -> None:
     # essential metadata (participants.tsv, README...) is always included
-    openneuro.download(dataset=dataset, tag=tag, target_dir=target,
-                       include=[f"sub-{s}" for s in subjects])
+    openneuro.download(dataset=dataset, tag=tag, target_dir=target, include=include)
 
 
 def list_files(folder: Path) -> list[tuple[str, float]]:
@@ -27,11 +26,13 @@ def describe_score(df: pd.DataFrame, col: str) -> str:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--subjects", nargs="*", default=["001"])
+    parser.add_argument("--include", nargs="*", default=None)  # glob patterns; overrides --subjects
     args = parser.parse_args()
 
     cfg = load_config("paths")
     bids_dir = Path(cfg["paths"]["bids_dir"])
-    download_subset(cfg["dataset"]["id"], cfg["dataset"]["version"], bids_dir, args.subjects)
+    include = args.include or [f"sub-{s}" for s in args.subjects]
+    download_subset(cfg["dataset"]["id"], cfg["dataset"]["version"], bids_dir, include)
 
     files = list_files(bids_dir)
     df = pd.read_csv(bids_dir / "participants.tsv", sep="\t")
@@ -43,10 +44,13 @@ def main() -> None:
     print(f"rows: {len(df)} | columns: {list(df.columns)}")
     for col in ["BDI", "STAI", "age"]:
         print(describe_score(df, col))
-    print(f"original ID 544 -> {df.loc[df['Original_ID'] == 544, 'participant_id'].tolist()}")
     print("\n== files ==")
-    for name, size in files:
-        print(f"  {size:8.1f} MB  {name}")
+    if len(files) <= 30:
+        for name, size in files:
+            print(f"  {size:8.1f} MB  {name}")
+    else:
+        kinds = pd.Series([n.split("_")[-1] for n, _ in files]).value_counts()
+        print(kinds.head(10).to_dict())
 
 
 if __name__ == "__main__":

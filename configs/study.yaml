@@ -1,0 +1,11 @@
+exclude:
+  "038": authors excluded (BDI unstable between screening and lab visit)
+design_groups:   # Cavanagh et al. 2019: stable BDI <7 (CTL) or >=13 (DEP)
+  ctl_max: 6
+  dep_min: 13
+bdi_ii_tiers:    # standard BDI-II cut-offs, for comparison
+  minimal: [0, 13]
+  mild: [14, 19]
+  moderate: [20, 28]
+  severe: [29, 63]
+stai_cutoffs: [40, 45]
