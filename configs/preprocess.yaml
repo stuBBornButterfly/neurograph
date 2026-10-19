@@ -15,3 +15,15 @@ ica:
   random_state: 97
   reject_labels: [eye blink, muscle artifact, heart beat, line noise, channel noise]
   min_prob: 0.7
+analysis:                      # copy used for features; ICA weights from the 1-100 Hz copy
+  l_freq: 0.5
+  h_freq: 45.0                 # below 60 Hz, so no notch needed
+epochs:
+  length_s: 2.0
+  decim: 2                     # 500 -> 250 Hz (safe after the 45 Hz low-pass)
+autoreject:
+  n_interpolate: [1, 4, 8]     # how many channels it may repair per epoch
+  consensus: [0.2, 0.4, 0.6, 0.8]
+  cv: 5
+  random_state: 97
+  n_jobs: -1

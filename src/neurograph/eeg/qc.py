@@ -91,3 +91,22 @@ def plot_before_after(before: mne.io.BaseRaw, after: mne.io.BaseRaw, chans: list
     out_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out_path, dpi=110)
     plt.close(fig)
+
+
+def plot_condition_psd(epochs: mne.Epochs, chans: list[str], out_path: Path, title: str) -> None:
+    spec = epochs.compute_psd(method="welch", fmin=1.0, fmax=45.0, picks=chans, verbose="error")
+    psd, freqs = spec.get_data(return_freqs=True)
+    codes = epochs.events[:, 2]
+    fig, axes = plt.subplots(1, len(chans), figsize=(4.5 * len(chans), 3.5), sharey=True)
+    for ax, (i, ch) in zip(np.atleast_1d(axes), enumerate(chans)):
+        for code, name, color in [(1, "eyes closed", "tab:blue"), (2, "eyes open", "tab:orange")]:
+            ax.plot(freqs, 10 * np.log10(psd[codes == code, i].mean(axis=0) * 1e12), c=color, label=name)
+        ax.axvspan(8, 13, color="green", alpha=0.08)
+        ax.set(title=ch, xlabel="Frequency (Hz)")
+    np.atleast_1d(axes)[0].set_ylabel("Power (dB µV²/Hz)")
+    np.atleast_1d(axes)[0].legend(fontsize=8)
+    fig.suptitle(title)
+    fig.tight_layout()
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_path, dpi=110)
+    plt.close(fig)

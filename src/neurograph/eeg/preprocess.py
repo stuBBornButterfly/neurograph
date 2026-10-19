@@ -5,10 +5,14 @@ import pandas as pd
 from neurograph.eeg.qc import eog_swap_check, eog_verdict
 
 
+def swap_eog(raw: mne.io.BaseRaw) -> None:
+    raw.rename_channels({"HEOG": "VEOG", "VEOG": "HEOG"})
+
+
 def fix_eog_labels(raw: mne.io.BaseRaw) -> str:
     verdict = eog_verdict(eog_swap_check(raw))
     if verdict == "looks SWAPPED":
-        raw.rename_channels({"HEOG": "VEOG", "VEOG": "HEOG"})
+        swap_eog(raw)
     return verdict
 
 
