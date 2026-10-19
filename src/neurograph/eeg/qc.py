@@ -61,3 +61,14 @@ def plot_psd(psd: np.ndarray, freqs: np.ndarray, ch_names: list[str], out_path: 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out_path, dpi=120)
     plt.close(fig)
+
+
+
+def eog_verdict(eog: dict[str, float], margin: float = 0.1) -> str:
+    blink = eog["VEOG~FP"] - eog["HEOG~FP"]          # VEOG should win on blinks
+    side = eog["HEOG~F7-F8"] - eog["VEOG~F7-F8"]     # HEOG should win on left-right moves
+    if blink > margin and side > margin:
+        return "labels look correct"
+    if blink < -margin and side < -margin:
+        return "looks SWAPPED"
+    return "unclear"
