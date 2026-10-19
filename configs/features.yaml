@@ -1,0 +1,19 @@
+input_glob: /kaggle/input/**/derivatives/labels.csv   # Phase 2 notebook output, attached as input
+psd:
+  fmin: 1.0
+  fmax: 45.0
+  n_fft: 500                   # one 2 s epoch at 250 Hz -> 0.5 Hz bins
+bands:                         # [low, high) Hz
+  delta: [1, 4]
+  theta: [4, 8]
+  alpha: [8, 13]
+  beta: [13, 30]
+  gamma: [30, 45]
+exclude_channels: [FP1, FPZ, FP2]   # eye-movement residue; kept in the data, not in features
+iaf:                           # individual alpha frequency, eyes closed
+  channels: [O1, OZ, O2]
+  range: [7, 14]
+sanity:
+  posterior: [O1, OZ, O2]
+  frontal: [F3, FZ, F4]
+  inspect: ["030", "032"]      # QC-flagged for low alpha ratio
