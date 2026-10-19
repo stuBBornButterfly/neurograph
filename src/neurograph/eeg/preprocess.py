@@ -37,12 +37,15 @@ def channel_metrics(raw: mne.io.BaseRaw, lf: list[float], hf: list[float]) -> pd
                                                     n_fft=1000, verbose="error")
     low = (freqs >= lf[0]) & (freqs < lf[1])
     high = (freqs >= hf[0]) & (freqs <= hf[1])
+    hf_pow = psd[:, high].mean(axis=1)
     ratio = np.log(psd[:, high].sum(axis=1) / psd[:, low].sum(axis=1))
     corr = np.abs(np.corrcoef(x))
     np.fill_diagonal(corr, 0)
     sd = x.std(axis=1)
     return pd.DataFrame({"sd_uv": sd * 1e6, "z_sd": _robust_z(np.log(sd)),
-                         "z_hf": _robust_z(ratio), "max_corr": corr.max(axis=1)}, index=eeg.ch_names)
+                         "z_hf": _robust_z(ratio), "hf_db": 10 * np.log10(hf_pow * 1e12),
+                         "z_hfpow": _robust_z(np.log(hf_pow)), "max_corr": corr.max(axis=1)},
+                        index=eeg.ch_names)
 
 
 def find_bad_channels(metrics: pd.DataFrame, z_thresh: float, min_corr: float) -> dict[str, str]:
@@ -52,13 +55,14 @@ def find_bad_channels(metrics: pd.DataFrame, z_thresh: float, min_corr: float) -
         if abs(m["z_sd"]) > z_thresh:
             reasons.append(f"amplitude z={m['z_sd']:+.1f}")
         if m["z_hf"] > z_thresh:
-            reasons.append(f"high-freq noise z={m['z_hf']:+.1f}")
+            reasons.append(f"high-freq ratio z={m['z_hf']:+.1f}")
+        if m["z_hfpow"] > z_thresh:
+            reasons.append(f"high-freq power z={m['z_hfpow']:+.1f}")
         if m["max_corr"] < min_corr:
             reasons.append(f"low corr {m['max_corr']:.2f}")
         if reasons:
             bads[ch] = ", ".join(reasons)
     return bads
-
 
 def average_reference(raw: mne.io.BaseRaw) -> None:
     raw.set_eeg_reference("average", projection=False, verbose="error")  # skips info['bads']

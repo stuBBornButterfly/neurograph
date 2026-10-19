@@ -34,7 +34,7 @@ def eog_swap_check(raw: mne.io.BaseRaw) -> dict[str, float]:
 
 
 def psd_summary(raw: mne.io.BaseRaw, line_freq: float) -> dict:
-    spec = raw.compute_psd(method="welch", fmin=1.0, fmax=100.0, picks="eeg",
+    spec = raw.compute_psd(method="welch", fmin=1.0, fmax=100.0, picks="eeg", exclude="bads",
                            n_fft=1000, verbose="error")  # 2 s windows -> 0.5 Hz steps
     psd, freqs = spec.get_data(return_freqs=True)
     o1 = psd[spec.ch_names.index("O1")]

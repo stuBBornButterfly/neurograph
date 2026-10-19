@@ -50,6 +50,7 @@ def main() -> None:
     print("closest calls:")
     print(f"  highest |amplitude z|: {metrics['z_sd'].abs().nlargest(3).round(1).to_dict()}")
     print(f"  highest high-freq z : {metrics['z_hf'].nlargest(3).round(1).to_dict()}")
+    print(f"  highest high-freq power: {metrics.nlargest(3, 'z_hfpow')[['z_hfpow', 'hf_db']].round(1).to_dict('index')}")
     print(f"  lowest max corr     : {metrics['max_corr'].nsmallest(3).round(2).to_dict()}")
     print(f"reference: average of {n_eeg - len(bads)} good channels")
     print("\n== before -> after ==")
