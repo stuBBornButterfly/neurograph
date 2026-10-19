@@ -22,3 +22,30 @@ models:                        # name: feature set (null = none), add sex, subje
 paired:                        # [with EEG, without EEG] on the same folds
   - [sex_eeg_closed, sex_only]
   - [eeg_closed, majority]
+xgb:                           # fixed, conservative settings (no tuning with 120 people)
+  n_estimators: 300
+  max_depth: 2
+  learning_rate: 0.05
+  subsample: 0.8
+  colsample_bytree: 0.5
+  min_child_weight: 2
+  random_state: 97
+explain:                       # step 4.2
+  models:
+    eeg_closed_lr:   {features: eeg_closed, sex: false, subset: all, kind: logreg}
+    eeg_all_lr:      {features: eeg_all, sex: false, subset: all, kind: logreg}
+    eeg_closed_xgb:  {features: eeg_closed, sex: false, subset: all, kind: xgb}
+    eeg_all_xgb:     {features: eeg_all, sex: false, subset: all, kind: xgb}
+    women_closed_lr: {features: eeg_closed, sex: false, subset: female, kind: logreg}
+    women_all_lr:    {features: eeg_all, sex: false, subset: female, kind: logreg}
+  paired:
+    - [eeg_all_lr, eeg_closed_lr]
+    - [eeg_closed_xgb, eeg_closed_lr]
+    - [eeg_all_xgb, eeg_all_lr]
+  permutation:
+    models: [eeg_closed_lr, eeg_all_lr, women_closed_lr]
+    n_perm: 200
+    n_splits: 5
+    random_state: 97
+  coef_model: eeg_all_lr       # logistic-regression weights, averaged over the 50 folds
+  shap_model: eeg_all_xgb      # tree SHAP on the test folds

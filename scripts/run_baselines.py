@@ -73,8 +73,8 @@ def main() -> None:
         if spec["subset"] not in splits_cache:  # same folds for every model on the same subjects
             splits_cache[spec["subset"]] = make_splits(y, sub["sub"].to_numpy(), cv["n_splits"],
                                                        cv["n_repeats"], cv["random_state"])
-        res, oof = cross_validate(X, y, splits_cache[spec["subset"]], spec.get("dummy", False),
-                                  m["logreg"], thr)
+        kind = "dummy" if spec.get("dummy") else spec.get("kind", "logreg")
+        res, oof = cross_validate(X, y, splits_cache[spec["subset"]], kind, m, thr)
         folds.append(res.assign(model=name))
         oofs.append(pd.DataFrame({"model": name, "repeat": np.repeat(np.arange(len(oof)), len(y)),
                                   "sub": np.tile(sub["sub"], len(oof)), "y": np.tile(y, len(oof)),

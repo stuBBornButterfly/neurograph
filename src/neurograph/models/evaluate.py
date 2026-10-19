@@ -7,6 +7,7 @@ from sklearn.metrics import balanced_accuracy_score, brier_score_loss, roc_auc_s
 from sklearn.model_selection import StratifiedGroupKFold
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
+from xgboost import XGBClassifier
 
 
 def make_splits(y: np.ndarray, groups: np.ndarray, n_splits: int, n_repeats: int,
@@ -19,22 +20,25 @@ def make_splits(y: np.ndarray, groups: np.ndarray, n_splits: int, n_repeats: int
     return out
 
 
-def build_model(dummy: bool, cfg: dict):
-    if dummy:
+def build_model(kind: str, cfg: dict):
+    if kind == "dummy":
         return DummyClassifier(strategy="prior")
+    if kind == "xgb":  # shallow trees, fixed settings: too few people to tune them honestly
+        return XGBClassifier(eval_metric="logloss", **cfg["xgb"])
     # imputer, scaler and C are all fitted on the training fold only
+    lr = cfg["logreg"]
     return make_pipeline(SimpleImputer(strategy="median"), StandardScaler(),
-                         LogisticRegressionCV(Cs=cfg["Cs"], cv=cfg["inner_cv"], scoring="roc_auc",
-                                              class_weight="balanced", max_iter=cfg["max_iter"]))
+                         LogisticRegressionCV(Cs=lr["Cs"], cv=lr["inner_cv"], scoring="roc_auc",
+                                              class_weight="balanced", max_iter=lr["max_iter"]))
 
 
-def cross_validate(X: np.ndarray, y: np.ndarray, splits: list, dummy: bool, cfg: dict,
+def cross_validate(X: np.ndarray, y: np.ndarray, splits: list, kind: str, cfg: dict,
                    threshold: float) -> tuple[pd.DataFrame, np.ndarray]:
     n_rep = max(s[0] for s in splits) + 1
     oof = np.full((n_rep, len(y)), np.nan)  # out-of-fold P(DEP) per repeat
     rows = []
     for r, f, tr, te in splits:
-        model = build_model(dummy, cfg).fit(X[tr], y[tr])
+        model = build_model(kind, cfg).fit(X[tr], y[tr])
         p = model.predict_proba(X[te])[:, 1]
         oof[r, te] = p
         rows.append({"repeat": r, "fold": f, "n_test": len(te), "auc": roc_auc_score(y[te], p),
