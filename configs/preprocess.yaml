@@ -1,0 +1,10 @@
+montage: colin27_1005          # MNE template; the dataset's own positions have a frame bug
+drop_channels: [CB1, CB2]      # cerebellar sites, not in the template
+l_freq: 1.0                    # high-pass (ICA likes >= 1 Hz)
+h_freq: 100.0
+notch_freqs: [60]
+bads:
+  z_thresh: 3.5                # robust z for amplitude and high-frequency noise
+  min_corr: 0.4                # best correlation with any other channel must exceed this
+  lf_band: [1, 40]
+  hf_band: [40, 100]
