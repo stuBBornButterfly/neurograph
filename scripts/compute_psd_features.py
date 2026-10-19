@@ -16,7 +16,8 @@ from neurograph.eeg.features import (CONDITIONS, alpha_peak, band_power, feature
 
 def load_psds(in_dir: Path, subs: list[str], run: str, p: dict):
     psds, counts, chs, info = [], [], None, None
-    for s in subs:
+    t0 = time.perf_counter()
+    for k, s in enumerate(subs, 1):
         ep = mne.read_epochs(in_dir / "epochs" / f"sub-{s}_run-{run}_epo.fif", verbose="error")
         if chs is None:
             chs, info = ep.ch_names, ep.info
@@ -24,6 +25,8 @@ def load_psds(in_dir: Path, subs: list[str], run: str, p: dict):
         psd, freqs = subject_psd(ep, p["fmin"], p["fmax"], p["n_fft"])
         psds.append(psd)
         counts.append({f"n_{c}": len(ep[c]) for c in CONDITIONS})
+        if k % 20 == 0 or k == len(subs):
+            print(f"  loaded {k}/{len(subs)} | {time.perf_counter() - t0:.0f} s", flush=True)
     return np.stack(psds), freqs, chs, info, counts
 
 
