@@ -27,3 +27,10 @@ autoreject:
   cv: 5
   random_state: 97
   n_jobs: -1
+qc_flags:                      # subjects outside these get a manual look
+  max_pct_rejected: 20
+  max_bads: 6
+  min_brain_ics: 3
+  max_ica_excluded: 20
+  min_alpha_ratio: 1.2
+  min_epochs_per_condition: 40

@@ -37,6 +37,13 @@ def n_repaired(log: RejectLog) -> int:
     return int((labels == 2).any(axis=1).sum())  # 2 = channel interpolated in that epoch
 
 
+def repair_by_channel(log: RejectLog, top: int = 5) -> dict[str, float]:
+    labels = np.nan_to_num(log.labels[~log.bad_epochs])
+    pct = (labels == 2).mean(axis=0) * 100  # % of kept epochs where the channel was rebuilt
+    order = np.argsort(pct)[::-1][:top]
+    return {log.ch_names[i]: round(float(pct[i]), 1) for i in order if pct[i] > 0}
+
+
 def alpha_ratio(epochs: mne.Epochs, ch: str = "O1", band: tuple[float, float] = (8.0, 13.0)) -> float:
     spec = epochs.compute_psd(method="welch", fmin=1.0, fmax=45.0, picks=[ch], verbose="error")
     psd, freqs = spec.get_data(return_freqs=True)

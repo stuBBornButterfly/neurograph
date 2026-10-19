@@ -7,7 +7,7 @@ import pandas as pd
 
 from neurograph.config import git_hash
 from neurograph.eeg.epochs import (alpha_ratio, block_epochs, count_conditions, n_repaired,
-                                   run_autoreject)
+                                   repair_by_channel, run_autoreject)
 from neurograph.eeg.ica import fit_ica, label_ica, pick_exclude
 from neurograph.eeg.load import crop_to_blocks, load_raw, read_events
 from neurograph.eeg.preprocess import (average_reference, channel_metrics, filter_raw,
@@ -87,7 +87,8 @@ def process_subject(bids_dir: Path, subject: str, run: str, eeg: dict, pre: dict
           "ica_n_brain": int((labels["label"] == "brain").sum()),
           "epochs_made": made, "epochs_kept": count_conditions(clean),
           "pct_rejected": round(100 * float(log.bad_epochs.mean()), 1),
-          "n_repaired": n_repaired(log), "alpha_ratio_o1": round(alpha_ratio(clean), 2),
+          "n_repaired": n_repaired(log), "most_repaired": repair_by_channel(log),
+          "alpha_ratio_o1": round(alpha_ratio(clean), 2),
           "sfreq": float(clean.info["sfreq"]), "n_channels": len(clean.ch_names),
           "ica_fit_s": round(fit_s, 1), "autoreject_s": round(ar_s, 1),
           "total_s": round(time.perf_counter() - t0, 1)}

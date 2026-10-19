@@ -28,6 +28,7 @@ def main() -> None:
           f"bads interpolated | {qc['n_channels']} ch @ {qc['sfreq']:.0f} Hz")
     print(f"epochs ({pre['epochs']['length_s']} s): made {qc['epochs_made']} -> kept {qc['epochs_kept']}")
     print(f"AutoReject: rejected {qc['pct_rejected']}% | repaired {qc['n_repaired']} epochs")
+    print(f"most repaired channels (% of kept epochs): {qc['most_repaired']}")
     print(f"alpha O1 closed/open: {qc['alpha_ratio_o1']}x")
     print(f"time: ICA fit {qc['ica_fit_s']} s | AutoReject {qc['autoreject_s']} s | total {qc['total_s']} s")
     for sub, suffix in [("epochs", "epo.fif"), ("ica", "ica.fif"), ("qc", "qc.json")]:
