@@ -9,9 +9,13 @@ def swap_eog(raw: mne.io.BaseRaw) -> None:
     raw.rename_channels({"HEOG": "VEOG", "VEOG": "HEOG"})
 
 
-def fix_eog_labels(raw: mne.io.BaseRaw) -> str:
+def eog_should_swap(verdict: str, swap_unclear: bool) -> bool:
+    return verdict == "looks SWAPPED" or (verdict == "unclear" and swap_unclear)
+
+
+def fix_eog_labels(raw: mne.io.BaseRaw, swap_unclear: bool = False) -> str:
     verdict = eog_verdict(eog_swap_check(raw))
-    if verdict == "looks SWAPPED":
+    if eog_should_swap(verdict, swap_unclear):
         swap_eog(raw)
     return verdict
 

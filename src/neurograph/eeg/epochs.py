@@ -20,11 +20,25 @@ def block_epochs(raw: mne.io.BaseRaw, blocks: pd.DataFrame, length_s: float,
                       baseline=None, preload=True, reject_by_annotation=False, verbose="error")
 
 
+def _autoreject(cfg: dict) -> AutoReject:
+    return AutoReject(n_interpolate=np.array(cfg["n_interpolate"]),
+                      consensus=np.array(cfg["consensus"]), cv=cfg["cv"],
+                      random_state=cfg["random_state"], n_jobs=cfg["n_jobs"], verbose=False)
+
+
 def run_autoreject(epochs: mne.Epochs, cfg: dict) -> tuple[mne.Epochs, RejectLog]:
-    ar = AutoReject(n_interpolate=np.array(cfg["n_interpolate"]),
-                    consensus=np.array(cfg["consensus"]), cv=cfg["cv"],
-                    random_state=cfg["random_state"], n_jobs=cfg["n_jobs"], verbose=False)
-    return ar.fit_transform(epochs, return_log=True)
+    # fit per condition: eyes-closed alpha is much larger, pooled thresholds would reject it
+    data = epochs.get_data(copy=True)
+    labels = np.zeros((len(epochs), len(epochs.ch_names)))
+    bad = np.zeros(len(epochs), dtype=bool)
+    for code in EVENT_ID.values():
+        idx = np.where(epochs.events[:, 2] == code)[0]
+        fixed, log = _autoreject(cfg).fit_transform(epochs[idx], return_log=True)
+        data[idx[~log.bad_epochs]] = fixed.get_data()
+        labels[idx], bad[idx] = log.labels, log.bad_epochs
+    clean = mne.EpochsArray(data[~bad], epochs.info, events=epochs.events[~bad],
+                            tmin=epochs.tmin, event_id=EVENT_ID, baseline=None, verbose="error")
+    return clean, RejectLog(bad, labels, epochs.ch_names)
 
 
 def count_conditions(epochs: mne.Epochs) -> dict[str, int]:

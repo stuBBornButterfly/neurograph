@@ -9,11 +9,12 @@ def bids_path(bids_dir: Path, subject: str, run: str, task: str) -> BIDSPath:
     return BIDSPath(root=bids_dir, subject=subject, task=task, run=run, datatype="eeg")
 
 
-def load_raw(bids_dir: Path, subject: str, run: str, task: str, eog: list[str]) -> mne.io.BaseRaw:
+def load_raw(bids_dir: Path, subject: str, run: str, task: str, eog: list[str],
+             ecg: list[str] = ()) -> mne.io.BaseRaw:
     raw = read_raw_bids(bids_path(bids_dir, subject, run, task), verbose="error")
     raw.load_data(verbose="error")
     # channels.tsv lists every type as n/a, so set them here
-    types = {ch: ("eog" if ch in eog else "eeg") for ch in raw.ch_names}
+    types = {ch: ("eog" if ch in eog else "ecg" if ch in ecg else "eeg") for ch in raw.ch_names}
     raw.set_channel_types(types, on_unit_change="ignore")
     return raw
 

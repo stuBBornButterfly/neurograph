@@ -11,14 +11,15 @@ from neurograph.eeg.epochs import (alpha_ratio, block_epochs, count_conditions, 
 from neurograph.eeg.ica import fit_ica, label_ica, pick_exclude
 from neurograph.eeg.load import crop_to_blocks, load_raw, read_events
 from neurograph.eeg.preprocess import (average_reference, channel_metrics, filter_raw,
-                                       find_bad_channels, fix_eog_labels, set_template_montage,
-                                       swap_eog)
+                                       eog_should_swap, find_bad_channels, fix_eog_labels,
+                                       set_template_montage, swap_eog)
 from neurograph.eeg.qc import eyes_blocks
 
 
 def load_cropped(bids_dir: Path, subject: str, run: str,
                  eeg: dict) -> tuple[mne.io.BaseRaw, pd.DataFrame]:
-    raw = load_raw(bids_dir, subject, run, eeg["task"], eeg["eog_channels"])
+    raw = load_raw(bids_dir, subject, run, eeg["task"], eeg["eog_channels"],
+                   eeg.get("ecg_channels", []))
     blocks = eyes_blocks(read_events(bids_dir, subject, run, eeg["task"]))
     return crop_to_blocks(raw, blocks, eeg["block_pad_s"]), blocks
 
@@ -26,7 +27,7 @@ def load_cropped(bids_dir: Path, subject: str, run: str,
 def prepare_for_ica(bids_dir: Path, subject: str, run: str, eeg: dict,
                     pre: dict) -> tuple[mne.io.BaseRaw, dict]:
     raw, _ = load_cropped(bids_dir, subject, run, eeg)
-    verdict = fix_eog_labels(raw)
+    verdict = fix_eog_labels(raw, eeg.get("eog_swap_unclear", False))
     dropped = set_template_montage(raw, pre["montage"], pre["drop_channels"])
     filter_raw(raw, pre["l_freq"], pre["h_freq"], pre["notch_freqs"])
     metrics = channel_metrics(raw, pre["bads"]["lf_band"], pre["bads"]["hf_band"])
@@ -59,8 +60,8 @@ def process_subject(bids_dir: Path, subject: str, run: str, eeg: dict, pre: dict
     ica.exclude = pick_exclude(labels, ic["reject_labels"], ic["min_prob"])
     del raw_ica
 
-    raw, blocks = prepare_analysis(bids_dir, subject, run, eeg, pre,
-                                   rep["eog_verdict"] == "looks SWAPPED", list(rep["bads"]))
+    swapped = eog_should_swap(rep["eog_verdict"], eeg.get("eog_swap_unclear", False))
+    raw, blocks = prepare_analysis(bids_dir, subject, run, eeg, pre, swapped, list(rep["bads"]))
     ica.apply(raw, verbose="error")
     raw.interpolate_bads(reset_bads=True, verbose="error")
     average_reference(raw)  # re-reference now that bad channels are rebuilt
@@ -81,7 +82,7 @@ def process_subject(bids_dir: Path, subject: str, run: str, eeg: dict, pre: dict
 
     excluded = labels.iloc[ica.exclude]["label"].value_counts().to_dict()
     qc = {"subject": subject, "run": run, "commit": git_hash(),
-          "eog_verdict": rep["eog_verdict"], "bads": list(rep["bads"]),
+          "eog_verdict": rep["eog_verdict"], "eog_swapped": swapped, "bads": list(rep["bads"]),
           "bad_reasons": rep["bads"], "n_bads": len(rep["bads"]),
           "ica_n_excluded": len(ica.exclude), "ica_excluded": {k: int(v) for k, v in excluded.items()},
           "ica_n_brain": int((labels["label"] == "brain").sum()),

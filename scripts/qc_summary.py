@@ -43,8 +43,6 @@ def flag_subjects(df: pd.DataFrame, f: dict) -> pd.Series:
             out.append(f"alpha x{r['alpha_ratio_o1']}")
         if min(r["epochs_kept.closed"], r["epochs_kept.open"]) < f["min_epochs_per_condition"]:
             out.append("few epochs")
-        if r["eog_verdict"] == "unclear":
-            out.append("EOG unclear")
         return "; ".join(out)
     return df.apply(reasons, axis=1)
 
@@ -91,7 +89,8 @@ def main() -> None:
     print(f"kept epochs per condition: min closed {int(df['epochs_kept.closed'].min())}, "
           f"min open {int(df['epochs_kept.open'].min())}")
     print(f"brain ICs: median {df['ica_n_brain'].median():.0f} | min {df['ica_n_brain'].min()}")
-    print(f"EOG verdicts: {df['eog_verdict'].value_counts().to_dict()}")
+    print(f"EOG verdicts: {df['eog_verdict'].value_counts().to_dict()} | "
+          f"swapped: {int(df['eog_swapped'].sum())} of {len(df)}")
     bads = Counter(c for b in df["bads"] for c in b.split(";") if c)
     print(f"most common bad channels: {dict(bads.most_common(8))}")
     print(f"most repaired channel (n subjects): {df['top_repaired'].value_counts().head(6).to_dict()} | "
