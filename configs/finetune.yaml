@@ -1,7 +1,8 @@
 # Phase 7: QLoRA on the university public pages (retrieval-augmented fine-tuning: answer from passages, cite, or say "not in the passages")
 chunks_glob: /kaggle/input/**/institutional/chunks.jsonl   # notebook 60 output; falls back to <derivatives>/institutional
 out: qlora                                                # under <derivatives>
-base_model: Qwen/Qwen2.5-3B-Instruct
+base_model: Qwen/Qwen2.5-3B-Instruct      # the model the agent uses; QLoRA trains small adapters on top of it
+teacher_model: Qwen/Qwen2.5-7B-Instruct   # writes the Q&A pairs (self-hosted, fp16 across both T4s)
 seed: 97
 dataset:
   questions_per_chunk: 6
@@ -20,10 +21,13 @@ lora:
 train:
   epochs: 2
   lr: 2.0e-4
-  batch: 4
-  grad_accum: 4
-  max_len: 1536
+  batch: 2
+  grad_accum: 8
+  max_len: 2048               # longer examples are dropped, not cut (a cut context could lose the answer)
   warmup_ratio: 0.05
 eval:
   max_new_tokens: 200
   batch: 8
+gguf:                         # for the CPU demo (llama.cpp); 4-bit K-quant keeps answers close to fp16 at ~2 GB
+  quant: Q4_K_M
+  file: neurograph-qwen2.5-3b-Q4_K_M.gguf

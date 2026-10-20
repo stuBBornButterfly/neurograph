@@ -19,4 +19,9 @@ nli:
   min_entail: 0.5
 agent:
   context_k: 4                           # passages given to the model
+  # student words -> the words the university's pages use (search only; the question shown to the model is unchanged)
+  query_expansions:
+    'chat ?gpt|\bgpt\b|gemini|copilot|chatbot': artificial intelligence (AI) tools policy
+    '\bcgpa\b|\bgpa\b': grade point average
+    '\bdrop(?:ped)?\b': withdrawal
   gold: eval/agent_gold.jsonl

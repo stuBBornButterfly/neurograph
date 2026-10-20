@@ -36,3 +36,9 @@ def test_literature_vs_ours_tests_our_data_in_python():
     row = literature_vs_ours(claims, lambda names: data, REGIONS)[0]
     assert row["papers"] == 3 and row["expected_in_dep"] == "higher" and row["verdict"].startswith("replicated")
     assert "3 report higher" in comparison_facts(row)[0]
+
+
+def test_windows_split_tables_and_sentences():
+    from neurograph.literature.verify_nli import windows
+    w = windows("Grading System\nA student may earn five grades. The grade F is failing.\n80% and above | A+ | 4.00")
+    assert "The grade F is failing." in w and "80% and above | A+ | 4.00" in w and len(w) == 6

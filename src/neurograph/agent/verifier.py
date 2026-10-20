@@ -2,6 +2,8 @@ import re
 
 from sentence_transformers import CrossEncoder
 
+from neurograph.literature.verify_nli import windows
+
 NUMBER = re.compile(r"(?<![\w.])\d+(?:\.\d+)?%?")
 
 
@@ -30,9 +32,9 @@ class Verifier:
             return {"verdict": "unverified", "entailed_share": 0.0, "sentences": len(sents),
                     "unsupported_numbers": unsupported_numbers(answer, "")}
         supported = 0
+        premises = [w for p in passages + rules for w in windows(p)]  # sentence windows, not whole chunks
         for s in sents:
-            pairs = [(p, s) for p in passages + rules]
-            probs = self.nli.predict(pairs, apply_softmax=True)
+            probs = self.nli.predict([(w, s) for w in premises], apply_softmax=True, batch_size=64)
             supported += int(max(row[self.entail_idx] for row in probs) >= self.min_entail)
         bad_numbers = unsupported_numbers(answer, evidence)
         share = supported / len(sents) if sents else 1.0

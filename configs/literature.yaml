@@ -14,10 +14,10 @@ extract:
   max_new_tokens: 120
   # a claim sentence must name a band, the depressed group and a comparison
   band_words: {delta: delta, theta: theta, alpha: alpha, beta: beta, gamma: gamma, asymmetr: alpha}
-  group_words: "depress|MDD|patients"
+  group_words: 'depress|\bMDD\b'   # word boundary: not PMDD (premenstrual dysphoric disorder)
   compare_words: "higher|greater|increase|elevat|more|lower|reduc|decrease|less|smaller|no (?:significant )?differ|did not differ|similar"
   # NLI confuses these with band power (theta connectivity "entailed" theta power), so they need the word "power"
-  other_measures: "connectiv|coheren|synchron|phase|microstate|network|complexity|entropy|\\bERP|P300|amplitude envelope"
+  other_measures: 'connectiv|coheren|synchron|phase|microstate|network|complexity|entropy|\bERP|P300|amplitude envelope|correlat|fluctuat|variab'
 nli:
   model: cross-encoder/nli-deberta-v3-base   # larger than the agent's verifier: run once, offline
   min_entail: 0.5

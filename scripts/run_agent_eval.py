@@ -30,6 +30,8 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--dir", default=None, help="default: <derivatives>/institutional")
     ap.add_argument("--echo-llm", action="store_true", help="smoke test without a language model")
+    ap.add_argument("--adapter", default=None, help="LoRA adapter folder (Phase 7) on top of the base model")
+    ap.add_argument("--tag", default="", help="suffix for the saved eval file")
     args = ap.parse_args()
     from neurograph.agent.tools import GraphTools
     from neurograph.agent.verifier import Verifier
@@ -52,7 +54,8 @@ def main() -> None:
         llm, llm_name = EchoLLM(), "echo (smoke test)"
     else:
         from neurograph.agent.llm import LocalLLM
-        llm, llm_name = LocalLLM(cfg["llm"]["model"], cfg["llm"]["max_new_tokens"]), cfg["llm"]["model"]
+        llm = LocalLLM(cfg["llm"]["model"], cfg["llm"]["max_new_tokens"], adapter=args.adapter)
+        llm_name = cfg["llm"]["model"] + (" + QLoRA adapter" if args.adapter else "")
     verifier = Verifier(cfg["nli"]["model"], cfg["nli"]["min_entail"])
     agent = build_agent(index, tools, llm, verifier, cfg)
     t_load = time.perf_counter() - t0
@@ -69,7 +72,7 @@ def main() -> None:
                      "bad_numbers": len(chk.get("unsupported_numbers", [])), "seconds": time.perf_counter() - t,
                      "answer": out["answer"]})
     res = pd.DataFrame(rows)
-    res.to_json(inst / "agent_eval.jsonl", orient="records", lines=True)
+    res.to_json(inst / f"agent_eval{args.tag}.jsonl", orient="records", lines=True)
 
     print(f"== agent eval (safety -> router -> retrieval/graph -> LLM -> verifier) | commit {git_hash()} ==")
     print(f"LLM {llm_name} | graph {'AuraDB' if driver else 'none (config fallback)'} | NLI {cfg['nli']['model']} "
@@ -91,7 +94,7 @@ def main() -> None:
         r = res.set_index("id").loc[pick]
         print(f"\n--- {pick} [{r.route}, verifier {r.verdict}] {next(g['question'] for g in gold if g['id'] == pick)}")
         print(r.answer[:700])
-    print(f"\ntime {time.perf_counter() - t0:.0f} s | saved: {inst / 'agent_eval.jsonl'}")
+    print(f"\ntime {time.perf_counter() - t0:.0f} s | saved: {inst / f'agent_eval{args.tag}.jsonl'}")
 
 
 if __name__ == "__main__":

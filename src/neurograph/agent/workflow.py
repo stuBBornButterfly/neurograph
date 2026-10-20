@@ -1,3 +1,4 @@
+import re
 from typing import TypedDict
 
 from langgraph.graph import END, StateGraph
@@ -13,8 +14,8 @@ STUDY_SYSTEM = ("You explain results from the NeuroGraph EEG research database. 
                 "facts computed in Python; copy numbers exactly; do not add statistics of your own. If a verdict is "
                 "given, state that verdict and never call a result significant or replicated unless the verdict says "
                 "so. Say this is research data, not a diagnosis. At most 4 sentences.")
-LIT_SYSTEM = ("You summarise published EEG research for depression. Use ONLY the numbered claims and the facts computed "
-              "in Python. Cite each claim as (PMID number). Copy numbers exactly. If a verdict about our own data is "
+LIT_SYSTEM = ("You summarise published EEG research for depression. Use ONLY the listed claims and the facts computed "
+              "in Python. Cite every claim you use with its PMID, like (PMID 12345678). Copy numbers exactly. If a verdict about our own data is "
               "given, state it and never call a result replicated unless the verdict says so. Say this is research, "
               "not a diagnosis. At most 5 sentences.")
 
@@ -29,6 +30,11 @@ class State(TypedDict, total=False):
     check: dict
 
 
+def expand(question: str, expansions: dict[str, str]) -> str:
+    extra = [words for pat, words in expansions.items() if re.search(pat, question, re.I)]
+    return question + (" " + " ".join(extra) if extra else "")
+
+
 def build_agent(index, tools, llm, verifier, cfg: dict):
     k = cfg["agent"]["context_k"]
 
@@ -40,7 +46,7 @@ def build_agent(index, tools, llm, verifier, cfg: dict):
         return {"route": "literature" if LIT_WORDS.search(q) else "study" if STUDY_WORDS.search(q) else "policy"}
 
     def policy_node(s: State) -> State:
-        ids = index.dense(s["question"], k)
+        ids = index.dense(expand(s["question"], cfg["agent"].get("query_expansions", {})), k)
         passages = [index.chunks[i] for i in ids]
         rules = tools.rules_for([p["id"] for p in passages])
         context = "\n\n".join(f"[{n}] {p['title']}\n{p['text']}" for n, p in enumerate(passages, 1))
@@ -63,7 +69,7 @@ def build_agent(index, tools, llm, verifier, cfg: dict):
 
     def literature_node(s: State) -> State:
         claims, facts = tools.literature(s["question"])
-        lines = [f"[{n}] PMID {c['pmid']} ({c['year']}): {c['text']}" for n, c in enumerate(claims, 1)]
+        lines = [f"- (PMID {c['pmid']}, {c['year']}) {c['text']}" for c in claims]  # no [n], so it cites PMIDs
         context = "Published claims (NLI-verified):\n" + ("\n".join(lines) or "none found")
         if facts:
             context += "\n\nFacts computed in Python:\n" + "\n".join(facts)
