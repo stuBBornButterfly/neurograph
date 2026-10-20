@@ -20,3 +20,6 @@ __pycache__/
 # model files
 *.gguf
 *.safetensors
+# local runs
+logs/
+dist/

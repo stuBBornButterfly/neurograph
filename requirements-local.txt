@@ -1,0 +1,11 @@
+# local GPU machine instead of Kaggle (scripts/local_pipeline.sh); on top of requirements.txt + requirements-finetune.txt
+# torch from https://download.pytorch.org/whl/cu128 (Blackwell cards need CUDA 12.8 wheels)
+torch==2.11.0
+mne==1.13.2
+scikit-learn==1.7.2        # 1.8 changed StratifiedGroupKFold's shuffled splits; 1.7.2 reproduces the Kaggle folds
+xgboost==3.4.1
+shap==0.54.1
+transformers==5.20.2
+accelerate==1.15.0
+spacy==3.8.16
+sentencepiece==0.2.2   # llama.cpp's GGUF converter imports it

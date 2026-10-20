@@ -77,7 +77,8 @@ def main() -> None:
     in_dir = find_input_derivatives(f["input_glob"])
     out = Path(paths["paths"]["derivatives_dir"])
     (out / "features").mkdir(parents=True, exist_ok=True)
-    shutil.copy(in_dir / "labels.csv", out / "labels.csv")  # keep labels next to the features
+    if (in_dir / "labels.csv").resolve() != (out / "labels.csv").resolve():  # local runs: input = output folder
+        shutil.copy(in_dir / "labels.csv", out / "labels.csv")  # keep labels next to the features
     labels = pd.read_csv(out / "labels.csv", dtype={"sub": str})
     subs = labels["sub"].tolist()
 
