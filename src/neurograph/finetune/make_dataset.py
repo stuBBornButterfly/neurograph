@@ -37,6 +37,11 @@ def split_chunks(chunk_ids: list[str], test_share: float, seed: int) -> set[str]
     return set(ids[:round(len(ids) * test_share)])
 
 
+def neighbours(chunk: dict, by_pos: dict) -> list[dict]:
+    # the chunks just before and after on the same page (they share ~40 words with this one)
+    return [by_pos[k] for k in ((chunk["url"], chunk["chunk"] - 1), (chunk["url"], chunk["chunk"] + 1)) if k in by_pos]
+
+
 def context(passages: list[dict]) -> str:
     # same layout as the agent's policy prompt, so the adapter works inside the agent unchanged
     return "\n\n".join(f"[{n}] {p['title']}\n{p['text']}" for n, p in enumerate(passages, 1))
