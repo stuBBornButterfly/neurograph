@@ -20,7 +20,7 @@ it is shown.
   QLoRA for university questions, the base Qwen2.5-3B for research questions (the adapter was trained on university passages only;
   both Q4_K_M GGUF, llama.cpp on CPU) → verifier (every number must appear in the sources; each sentence is
   checked by an NLI model).
-- **Speed:** about 1 minute per university answer on the free 2-vCPU hardware (the prompt holds ~1,500 tokens of passages).
+- **Speed:** on the free 2-vCPU hardware an university answer takes about 100 s (the prompt holds ~1,700 tokens of passages) and a research answer 40-50 s; first start about 2 minutes plus the model downloads.
 - **Monitoring:** every answer and 👍/👎 vote is logged (questions PII-redacted, distress messages not stored);
   the sidebar shows counts, verification rate, latency and feedback.
 - Code, evaluation and limitations: https://github.com/stuBBornButterfly/neurograph

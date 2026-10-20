@@ -35,7 +35,7 @@ def main() -> None:
     files = [p for p in out.rglob("*") if p.is_file()]
     print(f"== Hugging Face Space folder | commit {git_hash()} ==")
     print(f"files {len(files)} | size {sum(p.stat().st_size for p in files) / 1e6:.1f} MB | time {time.perf_counter() - t0:.1f} s")
-    print(f"saved: {out}\nupload: huggingface-cli upload <user>/<space> {out} . --repo-type space")
+    print(f"saved: {out}\nupload: hf upload <user>/<space> {out} . --repo-type space")
 
 
 if __name__ == "__main__":

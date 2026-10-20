@@ -61,7 +61,7 @@ def main() -> None:
     ap.add_argument("--only", nargs="*", default=None, help="subset of models (base finetuned routed gguf reference)")
     args = ap.parse_args()
     t0 = time.perf_counter()
-    from neurograph.agent.backends import ApiLLM, LlamaCppLLM
+    from neurograph.agent.backends import ApiLLM, LlamaCppLLM, unload_ollama
     from neurograph.agent.tools import GraphTools
     from neurograph.agent.verifier import Verifier
     from neurograph.agent.workflow import POLICY_SYSTEM, build_agent
@@ -84,6 +84,8 @@ def main() -> None:
     verifier = Verifier(rag["nli"]["model"], rag["nli"]["min_entail"])
     ref_cfg = bcfg["reference"]
     names = args.only or [m["name"] for m in bcfg["models"]]
+    if ref_cfg["kind"] == "ollama":
+        unload_ollama(ref_cfg["base_url"])  # the reference / judge model may still sit on the GPU
 
     held, golds, timing = {}, {}, {}
     ft_llm = None

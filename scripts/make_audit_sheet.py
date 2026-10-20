@@ -1,4 +1,3 @@
-import argparse
 import time
 from pathlib import Path
 
@@ -18,14 +17,13 @@ def take(df: pd.DataFrame, n: int, seed: int) -> pd.DataFrame:
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser()
-    args = ap.parse_args()
     t0 = time.perf_counter()
     b = load_config("benchmark")
     a, seed = b["audit"], b["audit"]["seed"]
     bench = Path(load_config("paths")["paths"]["derivatives_dir"]) / "benchmark"
-    gold = pd.read_json(bench / "gold_answers.jsonl", lines=True)
-    held = pd.read_json(bench / "heldout_answers.jsonl", lines=True)
+    # "routed" re-uses the fine-tuned answers (policy) and the base answers (research): rating it again adds nothing
+    gold = pd.read_json(bench / "gold_answers.jsonl", lines=True).query("model != 'routed'")
+    held = pd.read_json(bench / "heldout_answers.jsonl", lines=True).query("model != 'routed'")
 
     parts = [take(gold[gold.route_gold.str.startswith("safety") & (gold.model == "gguf")], 6, seed)]
     for m in gold.model.unique():

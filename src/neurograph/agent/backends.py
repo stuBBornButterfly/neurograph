@@ -4,6 +4,17 @@ import time
 import requests
 
 
+def unload_ollama(base_url: str = "http://localhost:11434") -> list[str]:
+    # Ollama keeps models in GPU memory for minutes; free them before a PyTorch model needs the same card
+    try:
+        loaded = [m["name"] for m in requests.get(f"{base_url}/api/ps", timeout=5).json().get("models", [])]
+    except requests.RequestException:
+        return []
+    for name in loaded:
+        requests.post(f"{base_url}/api/generate", json={"model": name, "keep_alive": 0}, timeout=60)
+    return loaded
+
+
 class ApiLLM:
     # chat model behind an HTTP API: a self-hosted Ollama server or any OpenAI-compatible service (commercial APIs)
     # external=True marks an outside service: callers must only send public text (university pages, benchmark questions)

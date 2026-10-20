@@ -54,8 +54,9 @@ st.warning(health["disclaimer"], icon="⚠️")
 
 with st.sidebar:
     st.subheader("How it works")
-    st.markdown("Safety check → router → university page search or knowledge-graph query → fine-tuned Qwen2.5-3B → "
-                "verifier (every number must be in the sources, each sentence checked by an NLI model).")
+    st.markdown("Safety check → router → university page search or knowledge-graph query → Qwen2.5-3B (QLoRA fine-tune for "
+                "The university questions, base model for research) → verifier (numbers must be in the sources, each sentence "
+                "checked by an NLI model, effect directions checked against the statistics).")
     st.markdown(f"**Model:** {health['llm']}  \n**Graph:** {health['graph']}  \n**university passages:** {health['chunks']}")
     st.subheader("Monitoring")
     s = api("GET", "/stats")
@@ -90,7 +91,7 @@ if not st.session_state.history:
 
 question = st.chat_input("Ask about university rules and services, or about the EEG study") or st.session_state.pop("pending", None)
 if question:
-    with st.spinner("Searching, answering and checking (about 20-60 s on a free CPU)…"):
+    with st.spinner("Searching, answering and checking (up to 2 minutes on the free CPU)…"):
         res = api("POST", "/ask", json={"question": question})
     st.session_state.history.append((question, res))
     st.rerun()
