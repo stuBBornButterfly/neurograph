@@ -1,0 +1,51 @@
+audit_id,model,set,item
+h01,gguf,gold,a15
+h02,base,held-out,96213d525a6a-000
+h03,gguf,gold,a11
+h04,finetuned,gold,a18
+h05,gguf,held-out,8b238e17c552-004
+h06,base,gold,a22
+h07,finetuned,held-out (answer removed),4918ca7e853e-002
+h08,base,gold,a08
+h09,gguf,gold,a18
+h10,gguf,gold,a16
+h11,finetuned,gold,a22
+h12,reference,held-out,4918ca7e853e-002
+h13,base,held-out,08ba438dd0e6-014
+h14,finetuned,held-out,8b238e17c552-004
+h15,gguf,gold,a02
+h16,gguf,gold,a21
+h17,reference,gold,a02
+h18,base,held-out,8b238e17c552-004
+h19,base,held-out (answer removed),4918ca7e853e-002
+h20,finetuned,held-out,4918ca7e853e-002
+h21,base,gold,a18
+h22,gguf,held-out (answer removed),4918ca7e853e-002
+h23,reference,gold,a18
+h24,finetuned,gold,a08
+h25,reference,held-out (answer removed),4918ca7e853e-002
+h26,gguf,gold,a22
+h27,base,gold,a03
+h28,base,held-out,4918ca7e853e-002
+h29,gguf,gold,a12
+h30,base,gold,a21
+h31,reference,gold,a08
+h32,reference,held-out,96213d525a6a-000
+h33,finetuned,gold,a21
+h34,gguf,held-out,96213d525a6a-000
+h35,finetuned,gold,a02
+h36,finetuned,gold,a03
+h37,reference,held-out,08ba438dd0e6-014
+h38,finetuned,held-out,08ba438dd0e6-014
+h39,gguf,held-out,08ba438dd0e6-014
+h40,reference,held-out,8b238e17c552-004
+h41,reference,gold,a22
+h42,gguf,gold,a03
+h43,gguf,gold,a08
+h44,gguf,gold,a14
+h45,gguf,gold,a13
+h46,reference,gold,a21
+h47,base,gold,a02
+h48,gguf,held-out,4918ca7e853e-002
+h49,finetuned,held-out,96213d525a6a-000
+h50,reference,gold,a03
