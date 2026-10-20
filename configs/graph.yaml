@@ -1,0 +1,23 @@
+inputs:                        # notebook outputs attached to neurograph-50-graph
+  features: /kaggle/input/**/derivatives/features/features.csv        # 30-features V3 (labels.csv, regions.json next to it)
+  qc_table: /kaggle/input/**/derivatives/qc_table.csv                  # 20-preprocess V2
+  risk_tiers: /kaggle/input/**/derivatives/models/risk_tiers.csv       # 40-models V4
+  lr_weights: /kaggle/input/**/derivatives/models/lr_coefficients.csv  # 40-models V4 (eeg_all_lr)
+  results: /kaggle/input/**/derivatives/models/all_results.csv         # 42-channels (every Phase 4 model)
+weights_model: eeg_all_lr      # whose logistic-regression weights go into the graph
+weights_step: 4.2 xgboost + explain
+risk_models:                   # risk_tiers.csv column suffix -> model name
+  "": sex_eeg_closed_cal
+  _nosex: eeg_closed_sexadj_cal
+splits:                        # how each step's models were validated
+  default: StratifiedGroupKFold by person, 5 folds x 10 repeats, seed 97
+  4.4 eegnet: StratifiedGroupKFold by person, 5 folds x 3 repeats, seed 97
+measures:                      # feature-name part -> biomarker measure
+  abs: abs_power               # log10 µV²
+  rel: rel_power               # share of 1-45 Hz power
+  de: diff_entropy             # 0.5 ln(2πe·power)
+batch_size: 2000
+reset: true                    # delete the old study graph before loading
+study_labels: [Dataset, Participant, Assessment, Session, Recording, PipelineRun, FeatureValue,
+               Model, Split, Metric, RiskEstimate]
+# Biomarker, FrequencyBand and BrainRegion are shared with the literature graph (Phase 6): merged, never deleted
