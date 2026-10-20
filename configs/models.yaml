@@ -62,9 +62,16 @@ tiers:                         # step 4.3
     sex_eeg_closed:     {features: eeg_closed, sex: true, subset: all, kind: logreg}
     sex_eeg_closed_cal: {features: eeg_closed, sex: true, subset: all, kind: logreg_cal}
     eeg_all_cal:        {features: eeg_all, sex: false, subset: all, kind: logreg_cal}
+    eeg_closed_sexadj_cal: {features: eeg_closed, sex: true, subset: all, kind: logreg_sexadj_cal}   # 4.3b
   paired:
     - [eeg_closed_sexadj, eeg_closed_lr]
     - [eeg_all_sexadj, eeg_all_lr]
     - [sex_eeg_closed_cal, sex_eeg_closed]
-  calibrate_compare: [sex_eeg_closed, sex_eeg_closed_cal, eeg_all_lr, eeg_all_cal]
+  calibrate_compare: [sex_eeg_closed, sex_eeg_closed_cal, eeg_all_lr, eeg_all_cal, eeg_closed_sexadj_cal]
   tier_model: sex_eeg_closed_cal    # headline model, calibrated
+  tier_model_nosex: eeg_closed_sexadj_cal   # 4.3b exploratory: tiers that cannot sort by sex
+  permutation:                      # 4.3b: is the EEG signal left after removing sex above chance?
+    models: [eeg_closed_sexadj, eeg_all_sexadj]
+    n_perm: 200
+    n_splits: 5
+    random_state: 97

@@ -37,19 +37,19 @@ def shap_importance(X: np.ndarray, y: np.ndarray, splits: list, cfg: dict,
 
 
 def _perm_auc(X: np.ndarray, y: np.ndarray, groups: np.ndarray, cfg: dict, n_splits: int,
-              seed: int) -> float:
+              seed: int, kind: str) -> float:
     warnings.filterwarnings("ignore", category=FutureWarning)  # runs in a worker process
     rng = np.random.default_rng(seed)
     yp = rng.permutation(y)  # break the link between EEG and label
     splits = make_splits(yp, groups, n_splits, 1, seed)
-    aucs = [roc_auc_score(yp[te], build_model("logreg", cfg).fit(X[tr], yp[tr]).predict_proba(X[te])[:, 1])
+    aucs = [roc_auc_score(yp[te], build_model(kind, cfg).fit(X[tr], yp[tr]).predict_proba(X[te])[:, 1])
             for _, _, tr, te in splits]
     return float(np.mean(aucs))
 
 
 def permutation_null(X: np.ndarray, y: np.ndarray, groups: np.ndarray, cfg: dict, n_perm: int,
-                     n_splits: int, seed: int) -> np.ndarray:
-    return np.array(Parallel(n_jobs=-1)(delayed(_perm_auc)(X, y, groups, cfg, n_splits, seed + k)
+                     n_splits: int, seed: int, kind: str = "logreg") -> np.ndarray:
+    return np.array(Parallel(n_jobs=-1)(delayed(_perm_auc)(X, y, groups, cfg, n_splits, seed + k, kind)
                                         for k in range(n_perm)))
 
 
