@@ -1,0 +1,22 @@
+# demo app (FastAPI + Streamlit), local or on a free Hugging Face Space (CPU); env variables override these
+llm:
+  backend: llamacpp            # llamacpp: GGUF on CPU (Space) | transformers: base + adapter on GPU | api: configs/benchmark.yaml reference
+  gguf_repo: ""                # env GGUF_REPO: Hugging Face model repo with the GGUF, e.g. <user>/neurograph-qwen2.5-3b-gguf
+  gguf_file: neurograph-qwen2.5-3b-Q4_K_M.gguf
+  gguf_path: ""                # env GGUF_PATH: a local GGUF file instead of downloading
+  research_model: base         # study + literature routes: base (the adapter is trained on university policy prompts only) | finetuned
+  base_gguf_repo: Qwen/Qwen2.5-3B-Instruct-GGUF   # Qwen's own Q4_K_M build of the base model
+  base_gguf_file: qwen2.5-3b-instruct-q4_k_m.gguf
+  base_gguf_path: ""           # env BASE_GGUF_PATH: a local copy instead of downloading
+  adapter: ""                  # env ADAPTER: LoRA adapter folder (transformers backend only)
+  n_ctx: 4096                  # policy prompts are ~1.5k tokens (4 passages + rules)
+  max_new_tokens: 220
+data:
+  dir: app_data                # env APP_DATA: chunks.jsonl (redacted university pages) + graph_snapshot.json
+graph: auto                    # auto: live Neo4j if NEO4J_URI is set, else the snapshot | snapshot | neo4j
+logs:
+  dir: logs                    # env LOG_DIR: interactions.jsonl (questions PII-redacted; distress messages not stored)
+  hf_dataset: ""               # env LOG_DATASET: private HF dataset repo; the Space pushes the log there every 10 min
+  push_minutes: 10
+api:
+  url: http://127.0.0.1:8000   # env API_URL: where the Streamlit page finds FastAPI

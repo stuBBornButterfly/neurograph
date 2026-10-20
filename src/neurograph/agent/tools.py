@@ -48,7 +48,7 @@ class GraphTools:
         return [f"Rule ({r['s']}): if {r['c']} -> {r['v']}. Source: \"{r['q']}\"" for r in rows]
 
     def study(self, question: str) -> tuple[str, list[dict], list[str]]:
-        idx = next((i for pat, i in STUDY_ROUTES if re.search(pat, question, re.I)), 4)
+        idx = study_index(question)
         q = QUERIES[idx]
         rows = run(self.driver, read_only(q["cypher"])) if self.driver else []
         facts = study_facts(idx, rows)
@@ -60,19 +60,30 @@ class GraphTools:
         # verified published claims for the band/region in the question + a Python comparison with our data
         if not self.driver:
             return [], []
-        faa = re.search(r"asymmetr|\bfaa\b", question, re.I)
-        band, region = BAND_WORDS.search(question), REGION_WORDS.search(question)
-        params = {"band": "alpha" if faa else band and band.group(1).lower(),
-                  "region": "frontal" if faa else region and region.group(1).lower(),
-                  "measure": "asymmetry" if faa else "power" if band else None}
-        claims = run(self.driver, read_only(CLAIM_QUERY), **params)
-        regions = ["frontal", "central", "temporal", "parietal", "occipital"]
-        rows = literature_vs_ours(claims, lambda names: run(self.driver, read_only(VALUES_QUERY), names=names), regions)
-        rows = sorted(rows, key=lambda r: -r["papers"])[:3]
-        return claims[:k], [f for r in rows for f in comparison_facts(r)]
+        claims = run(self.driver, read_only(CLAIM_QUERY), **literature_params(question))
+        rows = literature_vs_ours(claims, lambda names: run(self.driver, read_only(VALUES_QUERY), names=names), REGIONS)
+        return claims[:k], top_comparison_facts(rows)
 
 
 FAA_IDX, TIER_IDX, PARTICIPANT_IDX = 6, 9, 0
+REGIONS = ["frontal", "central", "temporal", "parietal", "occipital"]
+
+
+def study_index(question: str) -> int:
+    return next((i for pat, i in STUDY_ROUTES if re.search(pat, question, re.I)), 4)
+
+
+def literature_params(question: str) -> dict:
+    # band / region / measure named in the question (None = any); FAA questions fix all three
+    faa = re.search(r"asymmetr|\bfaa\b", question, re.I)
+    band, region = BAND_WORDS.search(question), REGION_WORDS.search(question)
+    return {"band": "alpha" if faa else band and band.group(1).lower(),
+            "region": "frontal" if faa else region and region.group(1).lower(),
+            "measure": "asymmetry" if faa else "power" if band else None}
+
+
+def top_comparison_facts(rows: list[dict], n: int = 3) -> list[str]:
+    return [f for r in sorted(rows, key=lambda r: -r["papers"])[:n] for f in comparison_facts(r)]
 
 
 def study_facts(idx: int, rows: list[dict]) -> list[str]:

@@ -17,7 +17,7 @@
 {"id": "a17", "question": "How do I activate my university email account?", "route": "policy", "expect": ["G Suite", "email"]}
 {"id": "a18", "question": "How many participants are in the EEG study?", "route": "study", "expect": ["120"]}
 {"id": "a19", "question": "Does our EEG data replicate frontal alpha asymmetry in depression?", "route": "study", "expect": ["not replicated", "opposite direction"], "forbid": ["yes,", "replicates", "does replicate"]}
-{"id": "a20", "question": "Which EEG model had the best AUC?", "route": "study", "expect": ["0.727", "eeg_all"]}
+{"id": "a20", "question": "Which EEG model had the best AUC?", "route": "study", "expect": ["0.727", "0.728", "eeg_all", "eeg_all_cal"], "note": "best model is eeg_all_cal (AUC 0.727 on Kaggle, 0.728 in the local rerun); eeg_all alone cannot match eeg_all_cal"}
 {"id": "a21", "question": "How many participants fall in the high risk tier?", "route": "study", "expect": ["2"]}
 {"id": "a22", "question": "What do published studies say about frontal alpha asymmetry in depression?", "route": "literature", "expect": ["PMID"]}
 {"id": "a23", "question": "Does the literature report more theta power in depression, and does our data agree?", "route": "literature", "expect": ["PMID"], "forbid": ["replicates"]}

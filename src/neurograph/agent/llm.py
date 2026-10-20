@@ -49,3 +49,20 @@ class LocalLLM:
 
     def chat(self, system: str, user: str) -> str:
         return self.chat_many(system, [user], batch=1)[0]
+
+
+class AdapterOff:
+    # the loaded fine-tuned model with its LoRA add-ons switched off = the base model (same weights, same code)
+    def __init__(self, llm: LocalLLM):
+        self.llm, self.usage, self.external = llm, [], False
+
+    def chat_many(self, system: str, users: list[str], batch: int = 1, max_new_tokens: int | None = None) -> list[str]:
+        n = len(self.llm.usage)
+        with self.llm.model.disable_adapter():
+            out = self.llm.chat_many(system, users, batch, max_new_tokens)
+        self.usage += self.llm.usage[n:]
+        del self.llm.usage[n:]
+        return out
+
+    def chat(self, system: str, user: str) -> str:
+        return self.chat_many(system, [user])[0]

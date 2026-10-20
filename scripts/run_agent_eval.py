@@ -31,6 +31,8 @@ def main() -> None:
     ap.add_argument("--dir", default=None, help="default: <derivatives>/institutional")
     ap.add_argument("--echo-llm", action="store_true", help="smoke test without a language model")
     ap.add_argument("--adapter", default=None, help="LoRA adapter folder (Phase 7) on top of the base model")
+    ap.add_argument("--adapter-policy-only", action="store_true",
+                    help="adapter on the policy route only; study and literature answers come from the base model")
     ap.add_argument("--tag", default="", help="suffix for the saved eval file")
     args = ap.parse_args()
     from neurograph.agent.tools import GraphTools
@@ -50,14 +52,17 @@ def main() -> None:
         from neurograph.graph.client import get_driver
         driver = get_driver()
     tools = GraphTools(driver, pcfg)
+    research_llm = None
     if args.echo_llm:
         llm, llm_name = EchoLLM(), "echo (smoke test)"
     else:
-        from neurograph.agent.llm import LocalLLM
+        from neurograph.agent.llm import AdapterOff, LocalLLM
         llm = LocalLLM(cfg["llm"]["model"], cfg["llm"]["max_new_tokens"], adapter=args.adapter)
         llm_name = cfg["llm"]["model"] + (" + QLoRA adapter" if args.adapter else "")
+        if args.adapter and args.adapter_policy_only:
+            research_llm, llm_name = AdapterOff(llm), llm_name + " (policy route only)"
     verifier = Verifier(cfg["nli"]["model"], cfg["nli"]["min_entail"])
-    agent = build_agent(index, tools, llm, verifier, cfg)
+    agent = build_agent(index, tools, llm, verifier, cfg, research_llm)
     t_load = time.perf_counter() - t0
 
     gold = [json.loads(l) for l in (REPO_ROOT / cfg["agent"]["gold"]).read_text().splitlines()]
@@ -75,7 +80,7 @@ def main() -> None:
     res.to_json(inst / f"agent_eval{args.tag}.jsonl", orient="records", lines=True)
 
     print(f"== agent eval (safety -> router -> retrieval/graph -> LLM -> verifier) | commit {git_hash()} ==")
-    print(f"LLM {llm_name} | graph {'AuraDB' if driver else 'none (config fallback)'} | NLI {cfg['nli']['model']} "
+    print(f"LLM {llm_name} | graph {'Neo4j' if driver else 'none (config fallback)'} | NLI {cfg['nli']['model']} "
           f"| load {t_load:.0f} s")
     print(f"\n{'kind':8s} {'n':>3s} {'route ok':>8s} {'fact ok':>8s} {'verified':>8s} {'sec/q':>6s}")
     for kind, g in res.groupby("kind", sort=False):

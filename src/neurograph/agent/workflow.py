@@ -35,8 +35,11 @@ def expand(question: str, expansions: dict[str, str]) -> str:
     return question + (" " + " ".join(extra) if extra else "")
 
 
-def build_agent(index, tools, llm, verifier, cfg: dict):
+def build_agent(index, tools, llm, verifier, cfg: dict, research_llm=None):
+    # research_llm: model for the study and literature routes (default: llm); the QLoRA adapter is trained on
+    # university policy prompts only, so it can be kept to the policy route
     k = cfg["agent"]["context_k"]
+    rllm = research_llm or llm
 
     def safety_node(s: State) -> State:
         level = safety.check(s["question"])
@@ -61,7 +64,7 @@ def build_agent(index, tools, llm, verifier, cfg: dict):
         context = f"Query: {title}\nResults:\n{table}"
         if facts:
             context += "\n\nFacts computed in Python:\n" + "\n".join(facts)
-        answer = llm.chat(STUDY_SYSTEM, f"{context}\n\nQuestion: {s['question']}")
+        answer = rllm.chat(STUDY_SYSTEM, f"{context}\n\nQuestion: {s['question']}")
         # each fact is its own short passage so the NLI check compares like with like
         passages = [{"title": title, "text": table, "url": "neo4j"}] + \
             [{"title": "fact", "text": f, "url": "neo4j"} for f in facts]
@@ -73,7 +76,7 @@ def build_agent(index, tools, llm, verifier, cfg: dict):
         context = "Published claims (NLI-verified):\n" + ("\n".join(lines) or "none found")
         if facts:
             context += "\n\nFacts computed in Python:\n" + "\n".join(facts)
-        answer = llm.chat(LIT_SYSTEM, f"{context}\n\nQuestion: {s['question']}")
+        answer = rllm.chat(LIT_SYSTEM, f"{context}\n\nQuestion: {s['question']}")
         passages = [{"title": f"PMID {c['pmid']}", "text": f"PMID {c['pmid']} ({c['year']}): {c['text']}",
                      "url": f"https://pubmed.ncbi.nlm.nih.gov/{c['pmid']}/"} for c in claims] + \
             [{"title": "fact", "text": f, "url": "neo4j"} for f in facts]
