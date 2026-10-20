@@ -1,0 +1,9 @@
+# Phase 9: benchmark (llama.cpp row), RAGAS, demo app; versions tested together on 2026-10-21
+llama-cpp-python==0.3.36   # CPU wheel: --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
+ragas==0.4.3
+langchain-community==0.4.1 # ragas 0.4.3 imports chat_models.vertexai, removed in 0.4.2
+langchain-openai==1.7.2
+fastapi==0.155.0
+uvicorn==0.54.0
+streamlit==1.66.0
+huggingface-hub==1.33.0
