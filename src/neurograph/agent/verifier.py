@@ -26,6 +26,9 @@ class Verifier:
     def check(self, answer: str, passages: list[str], rules: list[str]) -> dict:
         evidence = "\n".join(passages + rules)
         sents = sentences(re.sub(r"\[\d+\]", "", answer))
+        if not passages + rules:  # nothing to check against: never "supported"
+            return {"verdict": "unverified", "entailed_share": 0.0, "sentences": len(sents),
+                    "unsupported_numbers": unsupported_numbers(answer, "")}
         supported = 0
         for s in sents:
             pairs = [(p, s) for p in passages + rules]

@@ -1,6 +1,7 @@
 import re
 
-from neurograph.agent.replication import FAA_QUERY, faa_facts
+from neurograph.agent.replication import FAA_QUERY, VALUES_QUERY, comparison_facts, faa_facts, literature_vs_ours
+from neurograph.graph.load_literature import CLAIM_QUERY
 from neurograph.agent.safety import SERVICE_QUERY
 from neurograph.graph.client import run
 from neurograph.graph.queries import QUERIES
@@ -13,6 +14,12 @@ STUDY_ROUTES = [(r"asymmetr|\bfaa\b|replicat", 6), (r"risk tier|tier", 9), (r"dr
                 (r"bdi|stai|score|questionnaire", 1), (r"participant|subject|how many people|sex|women|men", 0)]
 STUDY_WORDS = re.compile(r"\beeg\b|biomarker|alpha|theta|beta|gamma|delta|asymmetr|\bfaa\b|participant|"
                          r"our (?:data|study|model)|dataset|\bauc\b|risk tier|replicat|ds003478", re.I)
+
+
+LIT_WORDS = re.compile(r"literature|published|\bstudies\b|\bpapers?\b|pubmed|research (?:says?|shows?|finds?|reports?)|"
+                       r"meta-analys|evidence", re.I)
+BAND_WORDS = re.compile(r"\b(delta|theta|alpha|beta|gamma)\b", re.I)
+REGION_WORDS = re.compile(r"\b(frontal|central|temporal|parietal|occipital)\b", re.I)
 
 
 def read_only(cypher: str) -> str:
@@ -48,6 +55,21 @@ class GraphTools:
         if idx == FAA_IDX and self.driver:
             facts += faa_facts(run(self.driver, read_only(FAA_QUERY)))
         return q["title"], rows, facts
+
+    def literature(self, question: str, k: int = 6) -> tuple[list[dict], list[str]]:
+        # verified published claims for the band/region in the question + a Python comparison with our data
+        if not self.driver:
+            return [], []
+        faa = re.search(r"asymmetr|\bfaa\b", question, re.I)
+        band, region = BAND_WORDS.search(question), REGION_WORDS.search(question)
+        params = {"band": "alpha" if faa else band and band.group(1).lower(),
+                  "region": "frontal" if faa else region and region.group(1).lower(),
+                  "measure": "asymmetry" if faa else "power" if band else None}
+        claims = run(self.driver, read_only(CLAIM_QUERY), **params)
+        regions = ["frontal", "central", "temporal", "parietal", "occipital"]
+        rows = literature_vs_ours(claims, lambda names: run(self.driver, read_only(VALUES_QUERY), names=names), regions)
+        rows = sorted(rows, key=lambda r: -r["papers"])[:3]
+        return claims[:k], [f for r in rows for f in comparison_facts(r)]
 
 
 FAA_IDX, TIER_IDX, PARTICIPANT_IDX = 6, 9, 0

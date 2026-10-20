@@ -15,17 +15,15 @@ An EEG mental-health research pipeline that ends in a knowledge graph: resting-s
 
 ---
 
-## EEG pipeline at a glance
+## Where to find things
 
-| Topic | Where to look |
-|---|---|
-| Filtering, ICA artifact removal, epoching | [`src/neurograph/eeg/`](src/neurograph/eeg) · [QC results](reports/results.md#2-preprocessing-qc-commit-4531cf3-120120-subjects-0-failures) |
-| Feature extraction | [`eeg/features.py`](src/neurograph/eeg/features.py) · [features](reports/results.md#3-features-commit-17b8949) |
-| ML + DL training and evaluation (scikit-learn, XGBoost, PyTorch) | [`models/`](src/neurograph/models) · [EEGNet](src/neurograph/models/eegnet.py) · [all results](reports/results.md#4-models) |
-| Anxiety/depression risk stratification, DASS-21 | [risk tiers](#risk-tiers-and-the-dass-21) |
-| 32-channel device | [smaller caps](#key-findings) (BioSemi-32 and 10-20 layouts) |
-| Integration with analysis/visualisation software | MNE-Python, MLflow, Neo4j, [figures](#figures) |
-| Coded, anonymised data | pseudonymised BIDS codes only; no age stored in the graph |
+| Part | Code | Results |
+|---|---|---|
+| Preprocessing: filtering, ICA + ICLabel, epochs, AutoReject | [`src/neurograph/eeg/`](src/neurograph/eeg) | [QC](reports/results.md#2-preprocessing-qc-commit-4531cf3-120120-subjects-0-failures) |
+| Features: band power, FAA, alpha peak, regions | [`eeg/features.py`](src/neurograph/eeg/features.py) | [features](reports/results.md#3-features-commit-17b8949) |
+| Models: logistic regression, XGBoost, EEGNet, calibration | [`models/`](src/neurograph/models) | [all results](reports/results.md#4-models) |
+| Risk tiers | [`models/calibrate.py`](src/neurograph/models/calibrate.py) | [risk tiers](#risk-tiers-and-the-dass-21) |
+| Study graph (Neo4j) | [`graph/`](src/neurograph/graph) | [10 queries](src/neurograph/graph/queries.py) |
 
 ## Key findings
 
@@ -39,7 +37,7 @@ An EEG mental-health research pipeline that ends in a knowledge graph: resting-s
 
 1. **There is a modest EEG signal for depression, and most of it is not sex.** DEP participants are 73% female vs 53% of controls, and sex alone gives AUC 0.60. Removing sex's effect from every feature inside the training folds lowers EEG from 0.667 to 0.633, still above 97% of shuffled-label runs.
 2. **Deep learning does not help at n = 120.** EEGNet matches band-power logistic regression and overfits within ~2 epochs.
-3. **A 32- or 19-channel cap loses nothing measurable** (ΔAUC within ±0.013), which matters for a 32-channel field device and for the 19-channel Mumtaz dataset.
+3. **A 32- or 19-channel cap loses nothing measurable** (ΔAUC within ±0.013): the signal is broad and regional, so it does not need a dense 64-channel cap.
 4. **Calibration fixes the percentages, not the separation.** Platt scaling inside folds brings mean predicted risk from 0.47 to the true 0.375 (slope 0.66 → 1.04), but almost nobody reaches "high risk", and the score does not track severity within DEP.
 5. **The classic frontal alpha asymmetry finding does not replicate** here (F4–F3 slightly positive in DEP, opposite to the usual direction).
 
@@ -103,7 +101,7 @@ All 10 queries with their expected answers: [`src/neurograph/graph/queries.py`](
 
 The model is trained on design groups from the BDI-II (controls: stable BDI < 7; depressed: BDI ≥ 13; Cavanagh et al. 2019, PMID 31149639). Its calibrated P(DEP) is cut into pre-declared tiers: **low < 0.33 ≤ moderate < 0.66 ≤ high**. In this sample: low 46 people (28% DEP), moderate 72 (42% DEP), high 2 (both DEP).
 
-the university's project uses the Bangla **DASS-21**. There is no validated one-to-one crosswalk from BDI-II or STAI to DASS-21, so the mapping below is a guide for re-labelling, not an equivalence:
+Student screening often uses the **DASS-21** (depression, anxiety and stress) rather than the BDI-II. There is no validated one-to-one crosswalk from BDI-II or STAI to DASS-21, so the mapping below is a guide for re-labelling, not an equivalence:
 
 | here | DASS-21 counterpart (score × 2) | what to do with DASS-21 data |
 |---|---|---|

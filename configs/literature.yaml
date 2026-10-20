@@ -1,0 +1,26 @@
+# Phase 6.4-6.6: published EEG biomarker claims for depression (PubMed abstracts, public)
+pubmed:
+  esearch: https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi
+  efetch: https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi
+  tool: neurograph            # NCBI asks callers to identify the tool; no API key, so <= 3 requests/s
+  delay_s: 0.5
+  retmax: 200
+  query: >-
+    (EEG[tiab] OR electroencephalogra*[tiab]) AND (depress*[tiab] OR "major depressive disorder"[tiab])
+    AND (resting[tiab] OR rest[tiab]) AND (alpha[tiab] OR theta[tiab] OR beta[tiab] OR delta[tiab]
+    OR gamma[tiab] OR asymmetry[tiab]) AND hasabstract AND english[lang]
+    NOT (review[pt] OR "systematic review"[pt] OR meta-analysis[pt] OR animals[mh:noexp])
+extract:
+  max_new_tokens: 120
+  # a claim sentence must name a band, the depressed group and a comparison
+  band_words: {delta: delta, theta: theta, alpha: alpha, beta: beta, gamma: gamma, asymmetr: alpha}
+  group_words: "depress|MDD|patients"
+  compare_words: "higher|greater|increase|elevat|more|lower|reduc|decrease|less|smaller|no (?:significant )?differ|did not differ|similar"
+  # NLI confuses these with band power (theta connectivity "entailed" theta power), so they need the word "power"
+  other_measures: "connectiv|coheren|synchron|phase|microstate|network|complexity|entropy|\\bERP|P300|amplitude envelope"
+nli:
+  model: cross-encoder/nli-deberta-v3-base   # larger than the agent's verifier: run once, offline
+  min_entail: 0.5
+regions: [frontal, central, temporal, parietal, occipital]
+measures: [abs_power, rel_power]             # a "power" claim links to both measures of that band and region
+condition: depression

@@ -1,0 +1,29 @@
+# Phase 7: QLoRA on the university public pages (retrieval-augmented fine-tuning: answer from passages, cite, or say "not in the passages")
+chunks_glob: /kaggle/input/**/institutional/chunks.jsonl   # notebook 60 output; falls back to <derivatives>/institutional
+out: qlora                                                # under <derivatives>
+base_model: Qwen/Qwen2.5-3B-Instruct
+seed: 97
+dataset:
+  questions_per_chunk: 6
+  gen_max_new_tokens: 700
+  gen_batch: 8
+  distractors: 3              # retrieved chunks from other pages shown next to the right one
+  negative_share: 0.15        # examples with the right chunk removed -> "not in the passages"
+  test_share: 0.2             # held out by chunk (test answers come from chunks never trained on)
+  min_entail: 0.5             # NLI: the reference answer must be entailed by its chunk
+  nli_model: cross-encoder/nli-deberta-v3-base
+lora:
+  r: 16
+  alpha: 32
+  dropout: 0.05
+  targets: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]
+train:
+  epochs: 2
+  lr: 2.0e-4
+  batch: 4
+  grad_accum: 4
+  max_len: 1536
+  warmup_ratio: 0.05
+eval:
+  max_new_tokens: 200
+  batch: 8

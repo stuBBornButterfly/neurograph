@@ -19,3 +19,6 @@
 {"id": "a19", "question": "Does our EEG data replicate frontal alpha asymmetry in depression?", "route": "study", "expect": ["not replicated", "opposite direction"], "forbid": ["yes,", "replicates", "does replicate"]}
 {"id": "a20", "question": "Which EEG model had the best AUC?", "route": "study", "expect": ["0.727", "eeg_all"]}
 {"id": "a21", "question": "How many participants fall in the high risk tier?", "route": "study", "expect": ["2"]}
+{"id": "a22", "question": "What do published studies say about frontal alpha asymmetry in depression?", "route": "literature", "expect": ["PMID"]}
+{"id": "a23", "question": "Does the literature report more theta power in depression, and does our data agree?", "route": "literature", "expect": ["PMID"], "forbid": ["replicates"]}
+{"id": "a24", "question": "What does published research say about alpha power in depression?", "route": "literature", "expect": ["PMID"]}
