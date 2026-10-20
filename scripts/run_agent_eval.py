@@ -19,8 +19,10 @@ class EchoLLM:
         return " ".join(body.split("\n")[:2])[:300] + " [1]"
 
 
-def fact_hit(answer: str, expect: list[str]) -> bool:
-    return any(re.search(rf"(?<![\w.]){re.escape(e)}(?![\w])", answer, re.I) for e in expect)
+def fact_hit(answer: str, expect: list[str], forbid: list[str] = ()) -> bool:
+    # right fact present and no forbidden claim (e.g. "replicates" when the computed verdict says it does not)
+    wrong = any(f.lower() in answer.lower() for f in forbid)
+    return not wrong and any(re.search(rf"(?<![\w.]){re.escape(e)}(?![\w])", answer, re.I) for e in expect)
 
 
 def main() -> None:
@@ -62,7 +64,7 @@ def main() -> None:
         out = agent.invoke({"question": g["question"]})
         chk = out.get("check", {})
         rows.append({"id": g["id"], "kind": g["route"].split(":")[0], "route_ok": out["route"] == g["route"],
-                     "route": out["route"], "fact_ok": fact_hit(out["answer"], g["expect"]),
+                     "route": out["route"], "fact_ok": fact_hit(out["answer"], g["expect"], g.get("forbid", [])),
                      "verdict": chk.get("verdict", "-"), "entailed": chk.get("entailed_share"),
                      "bad_numbers": len(chk.get("unsupported_numbers", [])), "seconds": time.perf_counter() - t,
                      "answer": out["answer"]})
@@ -82,6 +84,9 @@ def main() -> None:
           f"non-safety questions sent to referral: {int((res[res.kind != 'safety'].route.str.startswith('safety')).sum())}")
     print("misses: " + (", ".join(f"{r.id} ({'route ' + r.route if not r.route_ok else 'fact'})"
                                   for r in res.itertuples() if not (r.route_ok and r.fact_ok)) or "none"))
+    for r in res.itertuples():
+        if not (r.route_ok and r.fact_ok):
+            print(f"  {r.id} answer: {r.answer[:300]!r}")
     for pick in ["a01", "a14", "a19"]:
         r = res.set_index("id").loc[pick]
         print(f"\n--- {pick} [{r.route}, verifier {r.verdict}] {next(g['question'] for g in gold if g['id'] == pick)}")

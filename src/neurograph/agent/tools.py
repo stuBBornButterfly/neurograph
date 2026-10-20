@@ -1,5 +1,6 @@
 import re
 
+from neurograph.agent.replication import FAA_QUERY, faa_facts
 from neurograph.agent.safety import SERVICE_QUERY
 from neurograph.graph.client import run
 from neurograph.graph.queries import QUERIES
@@ -39,8 +40,31 @@ class GraphTools:
                    ids=chunk_ids)
         return [f"Rule ({r['s']}): if {r['c']} -> {r['v']}. Source: \"{r['q']}\"" for r in rows]
 
-    def study(self, question: str) -> tuple[str, list[dict]]:
+    def study(self, question: str) -> tuple[str, list[dict], list[str]]:
         idx = next((i for pat, i in STUDY_ROUTES if re.search(pat, question, re.I)), 4)
         q = QUERIES[idx]
         rows = run(self.driver, read_only(q["cypher"])) if self.driver else []
-        return q["title"], rows
+        facts = study_facts(idx, rows)
+        if idx == FAA_IDX and self.driver:
+            facts += faa_facts(run(self.driver, read_only(FAA_QUERY)))
+        return q["title"], rows, facts
+
+
+FAA_IDX, TIER_IDX, PARTICIPANT_IDX = 6, 9, 0
+
+
+def study_facts(idx: int, rows: list[dict]) -> list[str]:
+    # totals the small LLM would otherwise have to add up itself, as plain sentences
+    if idx == PARTICIPANT_IDX and rows:
+        by = {g: sum(r["n"] for r in rows if r["group"] == g) for g in sorted({r["group"] for r in rows})}
+        fem = {g: sum(r["n"] for r in rows if r["group"] == g and r["sex"] == "F") for g in by}
+        return [f"The EEG study has {sum(by.values())} participants in total."] + \
+            [f"Group {g}: {n} participants ({fem[g]} female)." for g, n in by.items()]
+    if idx == TIER_IDX and rows:
+        return [f"The {r['tier']} risk tier has {r['ctl'] + r['dep']} participants ({r['ctl']} controls, "
+                f"{r['dep']} depression group)." for r in rows]
+    return []
+
+
+def rows_text(rows: list[dict]) -> str:
+    return "\n".join(", ".join(f"{k}: {v}" for k, v in r.items()) for r in rows)

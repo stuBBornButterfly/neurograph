@@ -1,18 +1,18 @@
-import json
 from typing import TypedDict
 
 from langgraph.graph import END, StateGraph
 
 from neurograph.agent import safety
-from neurograph.agent.tools import STUDY_WORDS
+from neurograph.agent.tools import STUDY_WORDS, rows_text
 
 POLICY_SYSTEM = ("You are the the university student information assistant. Answer ONLY from the numbered "
                  "passages and rules below. Cite passages like [1]. Keep numbers exactly as written. If the passages "
                  "do not contain the answer, say you don't know and suggest the relevant university office. Be brief "
                  "(at most 5 sentences). You do not give medical, psychological or legal advice.")
-STUDY_SYSTEM = ("You explain results from the NeuroGraph EEG research database. Use ONLY the query results given; "
-                "copy numbers exactly; do not add statistics of your own. Say this is research data, not a diagnosis. "
-                "At most 4 sentences.")
+STUDY_SYSTEM = ("You explain results from the NeuroGraph EEG research database. Use ONLY the query results and the "
+                "facts computed in Python; copy numbers exactly; do not add statistics of your own. If a verdict is "
+                "given, state that verdict and never call a result significant or replicated unless the verdict says "
+                "so. Say this is research data, not a diagnosis. At most 4 sentences.")
 
 
 class State(TypedDict, total=False):
@@ -45,11 +45,16 @@ def build_agent(index, tools, llm, verifier, cfg: dict):
         return {"passages": passages, "rules": rules, "answer": answer}
 
     def study_node(s: State) -> State:
-        title, rows = tools.study(s["question"])
-        context = f"Query: {title}\nResults: {json.dumps(rows, default=str)}"
+        title, rows, facts = tools.study(s["question"])
+        table = rows_text(rows)
+        context = f"Query: {title}\nResults:\n{table}"
+        if facts:
+            context += "\n\nFacts computed in Python:\n" + "\n".join(facts)
         answer = llm.chat(STUDY_SYSTEM, f"{context}\n\nQuestion: {s['question']}")
-        return {"rows": rows, "passages": [{"title": title, "text": json.dumps(rows, default=str), "url": "neo4j"}],
-                "answer": answer}
+        # each fact is its own short passage so the NLI check compares like with like
+        passages = [{"title": title, "text": table, "url": "neo4j"}] + \
+            [{"title": "fact", "text": f, "url": "neo4j"} for f in facts]
+        return {"rows": rows, "passages": passages, "answer": answer}
 
     def verify_node(s: State) -> State:
         check = verifier.check(s["answer"], [p["text"] for p in s.get("passages", [])], s.get("rules", []))
