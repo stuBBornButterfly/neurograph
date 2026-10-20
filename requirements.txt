@@ -6,7 +6,8 @@ openneuro-py
 braindecode
 mlflow
 neo4j
-python-picardbeautifulsoup4
+python-picard
+beautifulsoup4
 pypdf
 presidio-analyzer
 pytest
