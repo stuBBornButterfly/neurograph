@@ -21,7 +21,7 @@ def score(df: pd.DataFrame, answers: list[str], secs: float, chunk_text: dict, n
     ent = nli.entail([(chunk_text[c], a or ".") for c, a in zip(pos.chunk_id, clean)])
     return {"token_f1": sum(token_f1(a, r) for a, r in zip(clean, pos.reference)) / len(pos),
             "faithful": sum(e >= min_entail for e in ent) / len(pos),
-            "cites_right_passage": sum(f"[{p}]" in a for a, p in zip(a_pos, pos.gold_pos)) / len(pos),
+            "cites_right_passage": sum(f"[{int(p)}]" in a for a, p in zip(a_pos, pos.gold_pos)) / len(pos),  # read as float
             "wrongly_refuses": sum(bool(REFUSAL.search(a)) for a in a_pos) / len(pos),
             "says_not_in_passages": sum(bool(REFUSAL.search(a)) for a in a_neg) / max(len(neg), 1),
             "words": sum(len(a.split()) for a in answers) / len(answers), "sec_per_answer": secs / len(answers)}
@@ -77,6 +77,11 @@ def main() -> None:
     print(f"\ntime {time.perf_counter() - t0:.0f} s | saved: {out / 'eval.csv'}, {out / 'model_card.md'}")
 
 
+def gpu_name() -> str:
+    import torch
+    return torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CPU"
+
+
 def write_card(out: Path, cfg: dict, table: pd.DataFrame, n_test: int) -> None:
     lc, tc = cfg["lora"], cfg["train"]
     rows = "\n".join(f"| {m} | {table.loc['base', m]} | {table.loc['fine-tuned', m]} |" for m in table.columns)
@@ -93,7 +98,7 @@ passages, cites the passage it used, and says so when the passages do not contai
 - **Held-out test:** {n_test} examples from {cfg['dataset']['test_share']:.0%} of chunks that never appear in training.
 - **Method:** QLoRA, 4-bit NF4 base, LoRA r {lc['r']}, alpha {lc['alpha']}, dropout {lc['dropout']} on
   {', '.join(lc['targets'])}; {tc['epochs']} epochs, lr {tc['lr']}, effective batch {tc['batch'] * tc['grad_accum']};
-  one Kaggle T4.
+  one {gpu_name()}.
 
 | metric (held-out) | base | fine-tuned |
 |---|---|---|
