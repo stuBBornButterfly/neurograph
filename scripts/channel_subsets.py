@@ -68,7 +68,8 @@ def main() -> None:
     files = {Path(p).name.split("_")[0][4:]: p for p in glob.glob(c["epochs_glob"], recursive=True)}
     missing = [s for s in subs if s not in files]
     if missing:
-        raise FileNotFoundError(f"no epochs for {missing[:5]}...; attach neurograph-20-preprocess Version 2")
+        raise FileNotFoundError(f"no epochs for {len(missing)} people {missing[:5]} | {len(files)} epoch files match "
+                                f"{c['epochs_glob']}; attach neurograph-20-preprocess Version 2")
 
     rows = {name: [] for name in c["layouts"]}
     infos = {}

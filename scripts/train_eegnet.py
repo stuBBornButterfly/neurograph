@@ -69,7 +69,8 @@ def main() -> None:
     files = {Path(f).name.split("_")[0][4:]: f for f in glob.glob(e["epochs_glob"], recursive=True)}
     missing = [s for s in subs if s not in files]
     if missing:
-        raise FileNotFoundError(f"no epochs for {missing[:5]}...; attach neurograph-20-preprocess Version 2")
+        raise FileNotFoundError(f"no epochs for {len(missing)} people {missing[:5]} | {len(files)} epoch files match "
+                                f"{e['epochs_glob']}; attach neurograph-20-preprocess Version 2")
 
     print(f"== step 4.4 EEGNet | commit {git_hash()} | device {dev}"
           f"{' ' + torch.cuda.get_device_name(0) if dev.type == 'cuda' else ''} | torch {torch.__version__} ==")
