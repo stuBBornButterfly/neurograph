@@ -93,3 +93,24 @@ eegnet:                        # step 4.4, GPU notebook neurograph-41-eegnet
   patience: 10
   seed: 97
   compare: eeg_closed_lr       # paired with this logistic regression (step 4.2 spec) on the same folds
+channels:                      # step 4.5: would a smaller cap still work?
+  epochs_glob: /kaggle/input/**/derivatives/epochs/*_epo.fif
+  layouts:                     # null = every analysed channel, data left as in step 3 (must reproduce features.csv)
+    full: null
+    ch32: [FP1, AF3, F7, F3, FC1, FC5, T7, C3, CP1, CP5, P7, P3, PZ, PO3, O1, OZ,
+           O2, PO4, P4, P8, CP6, CP2, C4, T8, FC6, FC2, F4, F8, AF4, FP2, FZ, CZ]   # BioSemi 32 layout
+    ch19: [FP1, FP2, F7, F3, FZ, F4, F8, T7, C3, CZ, C4, T8, P7, P3, PZ, P4, P8, O1, O2]   # 10-20, as in Mumtaz
+  models:
+    eeg_closed:        {features: eeg_closed, sex: false, subset: all, kind: logreg}
+    sex_eeg_closed:    {features: eeg_closed, sex: true, subset: all, kind: logreg}
+    eeg_closed_sexadj: {features: eeg_closed, sex: true, subset: all, kind: logreg_sexadj}
+mlflow:                        # step 4.6: one run per model and step, read from the saved fold tables
+  folds_glob: /kaggle/input/**/derivatives/models/*_folds.csv
+  figures_glob: /kaggle/input/**/reports/figures/*.png
+  experiment: neurograph-phase4
+  steps:                       # fold table -> (step, figure)
+    cv_folds.csv: ["4.1 baselines", auc_baselines.png]
+    explain_folds.csv: ["4.2 xgboost + explain", model_explain.png]
+    tiers_folds.csv: ["4.3 calibration + tiers", calibration_tiers.png]
+    eegnet_folds.csv: ["4.4 eegnet", eegnet.png]
+    channels_folds.csv: ["4.5 channel subsets", channels_auc.png]
