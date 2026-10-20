@@ -10,3 +10,7 @@ python-picardbeautifulsoup4
 pypdf
 presidio-analyzer
 pytest
+qdrant-client
+rank-bm25
+sentence-transformers
+langgraph
