@@ -75,3 +75,21 @@ tiers:                         # step 4.3
     n_perm: 200
     n_splits: 5
     random_state: 97
+eegnet:                        # step 4.4, GPU notebook neurograph-41-eegnet
+  epochs_glob: /kaggle/input/**/derivatives/epochs/*_epo.fif
+  condition: closed            # same condition as the headline features
+  exclude_channels: [FP1, FPZ, FP2]
+  n_repeats: 3                 # first 3 of the 10 CV repeats -> the same 15 folds as the LR models
+  val_frac: 0.15               # people held out of each training fold for early stopping
+  f1: 8
+  d: 2
+  f2: 16
+  kern_len: 125                # 0.5 s at 250 Hz: resolves 2 Hz and up
+  dropout: 0.5
+  batch_size: 64
+  lr: 0.001
+  weight_decay: 0.01
+  max_epochs: 60
+  patience: 10
+  seed: 97
+  compare: eeg_closed_lr       # paired with this logistic regression (step 4.2 spec) on the same folds
