@@ -6,7 +6,7 @@
 The sample is stratified:
 - the 6 distress/crisis messages: the fixed referral, answered once;
 - 6 gold-question answers per model (3 policy, 2 study, 1 literature);
-- 5 held-out university questions per model (4 normal, 1 where the right passage was removed).
+- 5 held-out policy questions per model (4 normal, 1 where the right passage was removed).
 
 The models are Qwen2.5-3B base, Qwen2.5-3B + QLoRA, the same QLoRA model as a Q4_K_M GGUF on CPU (the deployed
 demo), and the larger reference model.

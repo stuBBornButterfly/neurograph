@@ -140,7 +140,7 @@ Every conclusion holds. The logistic-regression AUCs differ by ≤ 0.008 (a tent
 
 19,952 nodes / 38,963 relationships: 120 participants → sessions → recordings → pipeline runs (git hash, ICs removed, % rejected); 18,838 feature values linked to 79 biomarkers (measure × band × region, 3 FAA, IAF) → 5 frequency bands / 5 brain regions; 31 models with AUC; logistic-regression weights; 240 risk estimates. All 10 hand-written queries reproduce the numbers above (70–170 ms each); see `src/neurograph/graph/queries.py`.
 
-## 6. The university intake, search index and graphs
+## 6. University intake, search index and graphs
 
 ### 6.1 Public university pages → PII redaction → chunks (`scripts/ingest_pages.py`)
 
@@ -164,7 +164,7 @@ Identical on Kaggle (notebook 60) and in the local rerun of 2026-10-21.
 | keyword (BM25) | 0.50 | 0.67 | 0.78 | 0.599 |
 | hybrid (reciprocal rank fusion) | 0.67 | 0.83 | 0.89 | 0.755 |
 
-On 100 chunks, BM25 adds noise rather than recall, so the agent uses dense retrieval only (plus three query expansions from student words to university words, e.g. "ChatGPT" → "artificial intelligence (AI) tools policy").
+On 100 chunks, BM25 adds noise rather than recall, so the agent uses dense retrieval only (plus three query expansions from student words to the university's words, e.g. "ChatGPT" → "artificial intelligence (AI) tools policy").
 
 ### 6.3 Policy graph (`scripts/build_policy_graph.py`)
 
@@ -222,10 +222,10 @@ The adapter learned the task's format (cite, refuse when the answer is missing) 
 
 Both notebooks were executed on the same machine (commit `55f60c9`; the GGUF cell re-run at `4224df3` after a logging fix), and their outputs are saved in [`notebooks/`](../notebooks). This run wrote to its own folder. The benchmark, RAGAS, the audit sheet and the demo all still use the 2026-10-21 artifacts above. Two inputs changed between the runs:
 
-- **university pages:** fetched again. The passage text is identical, but the page bytes (and so the chunk ids) changed. That gives a different 20-chunk held-out split: train 340 (55 with the answer removed) / test 71 (10).
+- **University pages:** fetched again. The passage text is identical, but the page bytes (and so the chunk ids) changed. That gives a different 20-chunk held-out split: train 340 (55 with the answer removed) / test 71 (10).
 - **PubMed:** the top 200 differs by two papers. The extraction error from PMID 36792002 (remitted depression, §6.4) dropped out, leaving 22 claims, 15 verified from 13 papers. The other 8 replication verdicts are unchanged. The frontal theta comparison, which rested only on that claim, is gone.
 
-| held-out university questions | run 1 base | run 1 QLoRA | run 2 base | run 2 QLoRA |
+| held-out policy questions | run 1 base | run 1 QLoRA | run 2 base | run 2 QLoRA |
 |---|---|---|---|---|
 | n (answer removed) | 55 (11) | | 71 (10) | |
 | token F1 | 0.596 | 0.664 | 0.596 | 0.701 |
@@ -267,13 +267,13 @@ Safety → router → dense retrieval + graph rules / study query / verified cla
 
 ### 8.2 Demo app (`src/neurograph/app/`, `space/`)
 
-FastAPI (`/ask`, `/feedback`, `/stats`, `/health`) behind a Streamlit chat page, in one Docker image (CPU; runs locally or as a Hugging Face Docker Space): the fine-tuned Q4_K_M GGUF for university questions and Qwen's own base Q4_K_M GGUF for research questions (llama.cpp), BGE-small + Qdrant, the DeBERTa NLI verifier, and the knowledge graph either live (Neo4j secrets) or from a 19 kB snapshot of aggregates (`scripts/export_graph_snapshot.py`: counts, means and verdicts, never per-participant values). Monitoring: every answer and 👍/👎 vote goes to a JSON-lines log with PII redacted by the same Presidio rules as the intake (distress and crisis messages are not stored); the sidebar shows answers per route, verification rate, latency and feedback, and the log can be pushed to a private HF dataset every 10 minutes.
+FastAPI (`/ask`, `/feedback`, `/stats`, `/health`) behind a Streamlit chat page, in one Docker image (CPU; runs locally or as a Hugging Face Docker Space): the fine-tuned Q4_K_M GGUF for policy questions and Qwen's own base Q4_K_M GGUF for research questions (llama.cpp), BGE-small + Qdrant, the DeBERTa NLI verifier, and the knowledge graph either live (Neo4j secrets) or from a 19 kB snapshot of aggregates (`scripts/export_graph_snapshot.py`: counts, means and verdicts, never per-participant values). Monitoring: every answer and 👍/👎 vote goes to a JSON-lines log with PII redacted by the same Presidio rules as the intake (distress and crisis messages are not stored); the sidebar shows answers per route, verification rate, latency and feedback, and the log can be pushed to a private HF dataset every 10 minutes.
 
 ## 9. Evaluation (local run, 2026-10-21; `scripts/run_benchmark.py`, `run_ragas.py`, `make_audit_sheet.py`)
 
-Same prompts, same retrieved passages and graph facts for every model; greedy decoding; one request at a time (the latency a user sees). The **reference** is Qwen3.5-9B served by Ollama on the same GPU: no commercial API key was available, so it stands in for the commercial-API comparison. The harness talks to any OpenAI-compatible API, and an `external: true` reference only receives public university questions. "Deployed" = the routed setup as Q4_K_M GGUFs in llama.cpp on 8 CPU threads.
+Same prompts, same retrieved passages and graph facts for every model; greedy decoding; one request at a time (the latency a user sees). The **reference** is Qwen3.5-9B served by Ollama on the same GPU: no commercial API key was available, so it stands in for the commercial-API comparison. The harness talks to any OpenAI-compatible API, and an `external: true` reference only receives public policy questions. "Deployed" = the routed setup as Q4_K_M GGUFs in llama.cpp on 8 CPU threads.
 
-### 9.1 Held-out university questions (55: 44 answerable, 11 with the right passage removed; chunks never seen in training)
+### 9.1 Held-out policy questions (55: 44 answerable, 11 with the right passage removed; chunks never seen in training)
 
 | model | token F1 | faithful (NLI) | cites right passage | wrong refusals | correct refusals | words | s / answer |
 |---|---|---|---|---|---|---|---|
@@ -309,7 +309,7 @@ Same prompts, same retrieved passages and graph facts for every model; greedy de
 | routed, Q4_K_M GGUFs on CPU (as deployed) | 1164 / 28 | 0.00 | 2.52 | CPU |
 | Qwen3.5-9B via Ollama (self-hosted API) | 1196 / 70 | 0.00 | 0.51 | 0.09 |
 
-All rows are self-hosted, so the API bill is $0. For a commercial API with list prices in $ per million tokens, 1,000 questions cost (input tokens × input price + output tokens × output price) / 1,000 dollars, with the per-question token counts above (about 1,200 in and 25–70 out per question; prices change, so none are hard-coded). Compute hours are wall-clock model time on one RTX 5060 Ti (GPU rows, 180 W board power for the energy estimate) or 8 CPU threads (deployed row). On 2 CPU cores (Docker limited to 2 CPUs) the deployed setup takes ~100 s per university answer and 40–50 s per research answer.
+All rows are self-hosted, so the API bill is $0. For a commercial API with list prices in $ per million tokens, 1,000 questions cost (input tokens × input price + output tokens × output price) / 1,000 dollars, with the per-question token counts above (about 1,200 in and 25–70 out per question; prices change, so none are hard-coded). Compute hours are wall-clock model time on one RTX 5060 Ti (GPU rows, 180 W board power for the energy estimate) or 8 CPU threads (deployed row). On 2 CPU cores (Docker limited to 2 CPUs) the deployed setup takes ~100 s per policy answer and 40–50 s per research answer.
 
 ### 9.4 RAGAS (judge Gemma 2 9B through Ollama, a different model family from every contestant)
 

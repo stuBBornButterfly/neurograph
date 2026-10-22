@@ -1,6 +1,6 @@
 # NeuroGraph
 
-An EEG mental-health research pipeline that ends in a knowledge graph: resting-state EEG from people with and without depression is cleaned, turned into brain-rhythm biomarkers, modelled with honest person-wise validation, and stored with full provenance in Neo4j. On top sits a knowledge-verified student-support assistant for the university: a LangGraph agent that answers from PII-redacted public university pages, the study graph and NLI-verified PubMed claims, uses a QLoRA fine-tuned Qwen2.5-3B, checks every answer against its sources before showing it, sends distress messages to a fixed referral, and runs as a CPU demo with monitoring.
+An EEG mental-health research pipeline that ends in a knowledge graph: resting-state EEG from people with and without depression is cleaned, turned into brain-rhythm biomarkers, modelled with honest person-wise validation, and stored with full provenance in Neo4j. On top sits a knowledge-verified student-support assistant for a university: a LangGraph agent that answers from the university's PII-redacted public pages, the study graph and NLI-verified PubMed claims, uses a QLoRA fine-tuned Qwen2.5-3B, checks every answer against its sources before showing it, sends distress messages to a fixed referral, and runs as a CPU demo with monitoring.
 
 > **Research and screening prototype. Not a diagnostic tool.** No new human data was collected; all EEG comes from a public, de-identified OpenNeuro dataset.
 
@@ -11,7 +11,7 @@ An EEG mental-health research pipeline that ends in a knowledge graph: resting-s
 | 3 | Features: band power, FAA, IAF, regions | ✅ 157 per person |
 | 4 | Models: baselines, permutation tests, calibration, EEGNet, 32/19-channel caps, MLflow | ✅ |
 | 5 | Study graph in Neo4j AuraDB + 10 Cypher queries | ✅ |
-| 6 | university pages with PII redaction, search index, policy graph, PubMed literature graph | ✅ 100 passages, 0 PII leaks, 16 verified claims |
+| 6 | University pages with PII redaction, search index, policy graph, PubMed literature graph | ✅ 100 passages, 0 PII leaks, 16 verified claims |
 | 7 | QLoRA fine-tune of Qwen2.5-3B, GGUF export | ✅ |
 | 8 | LangGraph agent (safety node, graph verification), FastAPI + Streamlit demo with logs and feedback | ✅ runs locally with Docker; model on Hugging Face |
 | 9 | Evaluation: gold questions, RAGAS, base vs fine-tuned vs a larger reference model, human audit | ✅ (audit ratings pending) |
@@ -27,7 +27,7 @@ An EEG mental-health research pipeline that ends in a knowledge graph: resting-s
 | Models: logistic regression, XGBoost, EEGNet, calibration | [`models/`](src/neurograph/models) | [all results](reports/results.md#4-models) |
 | Risk tiers | [`models/calibrate.py`](src/neurograph/models/calibrate.py) | [risk tiers](#risk-tiers-and-the-dass-21) |
 | Study graph (Neo4j) | [`graph/`](src/neurograph/graph) | [10 queries](src/neurograph/graph/queries.py) |
-| university intake: fetch, clean, Presidio PII redaction, chunks, Qdrant | [`ingest/`](src/neurograph/ingest) | [intake + retrieval](reports/results.md#6-university-intake-search-index-and-graphs) |
+| University intake: fetch, clean, Presidio PII redaction, chunks, Qdrant | [`ingest/`](src/neurograph/ingest) | [intake + retrieval](reports/results.md#6-university-intake-search-index-and-graphs) |
 | Literature graph: PubMed claims, NLI check, replication in our data | [`literature/`](src/neurograph/literature), [`agent/replication.py`](src/neurograph/agent/replication.py) | [claims + replication](reports/results.md#64-literature-graph-scriptsbuild_literature_graphpy) |
 | QLoRA fine-tune and GGUF export | [`scripts/train_qlora.py`](scripts/train_qlora.py), [`finetune/`](src/neurograph/finetune) | [base vs QLoRA](reports/results.md#7-qlora-fine-tune-local-run-rtx-5060-ti-16-gb) |
 | Agent: safety node, router, verifier | [`agent/`](src/neurograph/agent) | [gold questions](reports/results.md#81-agent-on-the-24-gold-questions-scriptsrun_agent_evalpy-neo4j-with-the-study-policy-and-literature-graphs) |
@@ -52,7 +52,7 @@ An EEG mental-health research pipeline that ends in a knowledge graph: resting-s
 
 Assistant (details in [LLM and RAG assistant](#llm-and-rag-assistant)):
 
-6. **Fine-tuning taught the task's format more than facts.** On 55 held-out university questions from chunks never seen in training, QLoRA raised citing the right passage from 18% to 89%, answers entailed by the source from 61% to 84%, and correct "the passages don't say" from 45% to 82%; it also made a quarter of its answers terse fragments. A repeat run on a different held-out split (71 questions) showed the same gains (right passage 30% → 90%, entailed 66% → 82%) with fewer fragments (8%).
+6. **Fine-tuning taught the task's format more than facts.** On 55 held-out policy questions from chunks never seen in training, QLoRA raised citing the right passage from 18% to 89%, answers entailed by the source from 61% to 84%, and correct "the passages don't say" from 45% to 82%; it also made a quarter of its answers terse fragments. A repeat run on a different held-out split (71 questions) showed the same gains (right passage 30% → 90%, entailed 66% → 82%) with fewer fragments (8%).
 7. **Keep the adapter where it was trained.** Trained on university policy prompts only, it hurt study and literature answers (15/18 gold facts when used everywhere, in both runs), so the agent uses it on the policy route and the base model elsewhere. That set-up ties with the base model (17 vs 16 of 18 in the first run, 16 vs 17 in the repeat run).
 8. **Graph verification needs more than NLI.** The sentence-level NLI check missed a swapped higher/lower direction and an over-generalised AI-policy rule; a direction check against the effects computed in Python now catches the first kind.
 9. **Every distress or crisis message went to the referral, and no normal question did** (6/6 and 0/18, every model).
@@ -153,7 +153,7 @@ flowchart LR
 
 ### Evaluation
 
-On 24 hand-written gold questions (11 university policy, 4 study-graph, 3 literature, 6 distress/crisis) and 55 held-out synthetic university questions from chunks never seen in training. Every model gets the same prompts and passages, with greedy decoding. The reference is a larger self-hosted model behind an API (Qwen3.5-9B via Ollama; no commercial key was available, see limitations). Full tables: [results §9](reports/results.md#9-evaluation-local-run-2026-10-21-scriptsrun_benchmarkpy-run_ragaspy-make_audit_sheetpy).
+On 24 hand-written gold questions (11 university policy, 4 study-graph, 3 literature, 6 distress/crisis) and 55 held-out synthetic policy questions from chunks never seen in training. Every model gets the same prompts and passages, with greedy decoding. The reference is a larger self-hosted model behind an API (Qwen3.5-9B via Ollama; no commercial key was available, see limitations). Full tables: [results §9](reports/results.md#9-evaluation-local-run-2026-10-21-scriptsrun_benchmarkpy-run_ragaspy-make_audit_sheetpy).
 
 **Agent, end to end (gold questions):**
 
@@ -165,7 +165,7 @@ On 24 hand-written gold questions (11 university policy, 4 study-graph, 3 litera
 | routed, Q4_K_M GGUFs on CPU (as deployed) | 10/11 | 3/4 | 1/3 | 14/18 | 0.78 | 24/24 | 9.8 |
 | Qwen3.5-9B via Ollama (self-hosted API) | 10/11 | 4/4 | 3/3 | 17/18 | 0.50 | 24/24 | 2.5 |
 
-**Held-out university questions (answer generation only):**
+**Held-out policy questions (answer generation only):**
 
 | model | token F1 | faithful (NLI) | cites right passage | wrong refusals | correct refusals | words | s / answer |
 |---|---|---|---|---|---|---|---|
@@ -196,11 +196,11 @@ Context precision is identical for every model by construction: it scores the pa
 
 ### Demo
 
-**Fine-tuned model:** [stuBBornButterfly/neurograph-qwen2.5-3b-gguf](https://huggingface.co/stuBBornButterfly/neurograph-qwen2.5-3b-gguf) (Q4_K_M GGUF, 1.93 GB, with the model card). The demo runs locally with Docker on CPU (about 100 s per university answer and 40–50 s per research answer on 2 CPU cores); it is not hosted, because Hugging Face Docker Spaces now need a paid plan.
+**Fine-tuned model:** [stuBBornButterfly/neurograph-qwen2.5-3b-gguf](https://huggingface.co/stuBBornButterfly/neurograph-qwen2.5-3b-gguf) (Q4_K_M GGUF, 1.93 GB, with the model card). The demo runs locally with Docker on CPU (about 100 s per policy answer and 40–50 s per research answer on 2 CPU cores); it is not hosted, because Hugging Face Docker Spaces now need a paid plan.
 
 ![demo](reports/figures/demo_app.png)
 
-The demo is one Docker image ([`space/`](space)): FastAPI (`/ask`, `/feedback`, `/stats`, `/health`) behind a Streamlit chat page. It uses the fine-tuned Q4_K_M GGUF for university questions and Qwen's own base Q4_K_M GGUF for research questions (llama.cpp), BGE + Qdrant, and the NLI verifier. The knowledge graph is either live (Neo4j secrets) or a 19 kB snapshot of aggregates and computed facts, never per-participant values. Every answer and 👍/👎 vote goes to a JSON-lines log with personal details redacted by the intake's Presidio rules (distress messages are not stored); the sidebar shows answers per route, verification rate, latency and feedback, and the log can be pushed to a private dataset every 10 minutes.
+The demo is one Docker image ([`space/`](space)): FastAPI (`/ask`, `/feedback`, `/stats`, `/health`) behind a Streamlit chat page. It uses the fine-tuned Q4_K_M GGUF for policy questions and Qwen's own base Q4_K_M GGUF for research questions (llama.cpp), BGE + Qdrant, and the NLI verifier. The knowledge graph is either live (Neo4j secrets) or a 19 kB snapshot of aggregates and computed facts, never per-participant values. Every answer and 👍/👎 vote goes to a JSON-lines log with personal details redacted by the intake's Presidio rules (distress messages are not stored); the sidebar shows answers per route, verification rate, latency and feedback, and the log can be pushed to a private dataset every 10 minutes.
 
 Run it locally (Docker, about 8 GB free RAM; the first start downloads the two GGUFs, ~4 GB):
 
@@ -217,8 +217,8 @@ Optional: the `NEO4J_*` variables for the live graph instead of the snapshot. Th
 - **Automatic judges are models too:** RAGAS uses a local 9B judge (Gemma 2), and faithfulness uses NLI; both are imperfect, and whole-answer NLI penalises long answers. The human audit is the reference, and its ratings are still pending.
 - **The verifier can be wrong:** sentence-level NLI passed an over-generalised AI-policy answer ("ChatGPT is not permitted", but the policy allows limited cited use), and the direction check was added after a swapped direction slipped through. A "checked" badge means the sources were consulted, not that the answer is right.
 - **Configuration chosen on the same gold set:** using the adapter on the policy route only was decided after seeing the 24 gold answers, and a repeat run did not confirm that it beats the base model (16 vs 17 of 18).
-- **CPU demo is slow:** about 100 s per university answer on 2 CPU cores, and the 4-bit GGUFs get 3 fewer gold facts than the fp16 setup (14 vs 17 of 18).
-- **Snapshot of a changing website:** university pages were fetched on 2026-10-20/21; rules and contacts may change.
+- **CPU demo is slow:** about 100 s per policy answer on 2 CPU cores, and the 4-bit GGUFs get 3 fewer gold facts than the fp16 setup (14 vs 17 of 18).
+- **Snapshot of a changing website:** The university pages were fetched on 2026-10-20/21; rules and contacts may change.
 - **Not a counsellor:** the assistant answers information questions; it does not give medical, psychological or legal advice.
 
 ## Limitations
@@ -244,7 +244,7 @@ Everything runs on free Kaggle notebooks that clone this repo and run `python -m
 | `neurograph-41-eegnet` | EEGNet | GPU T4 | 20, 30 |
 | `neurograph-42-channels` | 32/19-channel caps, MLflow | CPU | 20, 30, 40, 41 |
 | `neurograph-50-graph` | Neo4j study graph + queries | CPU | 20, 30, 40, 42 + AuraDB secrets |
-| `neurograph-60-intake` | university intake, index, policy graph, literature graph, agent eval | GPU T4 | AuraDB secrets |
+| `neurograph-60-intake` | University intake, index, policy graph, literature graph, agent eval | GPU T4 | AuraDB secrets |
 | `neurograph-70-qlora` | Q&A pairs, QLoRA, base vs fine-tuned, agent eval, GGUF export | GPU T4 x2 | 60 + AuraDB secrets |
 
 Notebooks 60 and 70 also run outside Kaggle: their setup cells detect it and otherwise use the local checkout, `.venv` and `.env`. The outputs saved in these two notebooks come from such a run (one RTX 5060 Ti, 2026-10-22, against the AuraDB graph; see the repeat run in [`reports/results.md`](reports/results.md) §7).

@@ -6,21 +6,21 @@ colorTo: blue
 sdk: docker
 app_port: 7860
 pinned: false
-short_description: The university student assistant checked against a knowledge graph
+short_description: University student assistant checked against a knowledge graph
 ---
 
 # NeuroGraph assistant
 
-A student-support assistant for the university that answers from public university pages and from the
+A student-support assistant for a university that answers from its public pages and from the
 NeuroGraph knowledge graph (an EEG depression study plus published EEG research), and checks every answer before
 it is shown.
 
-- **Pipeline:** safety check (distress or crisis → fixed referral to university counselling and 999) → router → search over
+- **Pipeline:** safety check (distress or crisis → fixed referral to the university's counselling service and 999) → router → search over
   100 PII-redacted university passages (BGE embeddings, Qdrant) or a read-only graph query → Qwen2.5-3B fine-tuned with
-  QLoRA for university questions, the base Qwen2.5-3B for research questions (the adapter was trained on university passages only;
+  QLoRA for policy questions, the base Qwen2.5-3B for research questions (the adapter was trained on university passages only;
   both Q4_K_M GGUF, llama.cpp on CPU) → verifier (every number must appear in the sources; each sentence is
   checked by an NLI model).
-- **Speed:** on the free 2-vCPU hardware an university answer takes about 100 s (the prompt holds ~1,700 tokens of passages) and a research answer 40-50 s; first start about 2 minutes plus the model downloads.
+- **Speed:** on the free 2-vCPU hardware an policy answer takes about 100 s (the prompt holds ~1,700 tokens of passages) and a research answer 40-50 s; first start about 2 minutes plus the model downloads.
 - **Monitoring:** every answer and 👍/👎 vote is logged (questions PII-redacted, distress messages not stored);
   the sidebar shows counts, verification rate, latency and feedback.
 - Code, evaluation and limitations: https://github.com/stuBBornButterfly/neurograph
