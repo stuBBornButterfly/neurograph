@@ -52,8 +52,8 @@ An EEG mental-health research pipeline that ends in a knowledge graph: resting-s
 
 Assistant (details in [LLM and RAG assistant](#llm-and-rag-assistant)):
 
-6. **Fine-tuning taught the task's format more than facts.** On 55 held-out university questions from chunks never seen in training, QLoRA raised citing the right passage from 18% to 89%, answers entailed by the source from 61% to 84%, and correct "the passages don't say" from 45% to 82%; it also made a quarter of its answers terse fragments.
-7. **Keep the adapter where it was trained.** Trained on university policy prompts only, it improved policy answers (11/11) but hurt study and literature answers, so the agent uses it on the policy route and the base model elsewhere (17/18 gold facts vs 16/18 base).
+6. **Fine-tuning taught the task's format more than facts.** On 55 held-out university questions from chunks never seen in training, QLoRA raised citing the right passage from 18% to 89%, answers entailed by the source from 61% to 84%, and correct "the passages don't say" from 45% to 82%; it also made a quarter of its answers terse fragments. A repeat run on a different held-out split (71 questions) showed the same gains (right passage 30% → 90%, entailed 66% → 82%) with fewer fragments (8%).
+7. **Keep the adapter where it was trained.** Trained on university policy prompts only, it hurt study and literature answers (15/18 gold facts when used everywhere, in both runs), so the agent uses it on the policy route and the base model elsewhere. That set-up ties with the base model (17 vs 16 of 18 in the first run, 16 vs 17 in the repeat run).
 8. **Graph verification needs more than NLI.** The sentence-level NLI check missed a swapped higher/lower direction and an over-generalised AI-policy rule; a direction check against the effects computed in Python now catches the first kind.
 9. **Every distress or crisis message went to the referral, and no normal question did** (6/6 and 0/18, every model).
 
@@ -217,7 +217,7 @@ Run it locally: `docker build -t neurograph-space dist/space && docker run -p 78
 - **No commercial API in the benchmark:** no API key was available for this run, so the "API" row is a larger self-hosted model (Qwen3.5-9B through Ollama). The harness takes any OpenAI-compatible API (`configs/benchmark.yaml`), and the token counts give the cost at any list price.
 - **Automatic judges are models too:** RAGAS uses a local 9B judge (Gemma 2), and faithfulness uses NLI; both are imperfect, and whole-answer NLI penalises long answers. The human audit is the reference, and its ratings are still pending.
 - **The verifier can be wrong:** sentence-level NLI passed an over-generalised AI-policy answer ("ChatGPT is not permitted", but the policy allows limited cited use), and the direction check was added after a swapped direction slipped through. A "checked" badge means the sources were consulted, not that the answer is right.
-- **Configuration chosen on the same gold set:** using the adapter on the policy route only was decided after seeing the 24 gold answers.
+- **Configuration chosen on the same gold set:** using the adapter on the policy route only was decided after seeing the 24 gold answers, and a repeat run did not confirm that it beats the base model (16 vs 17 of 18).
 - **CPU demo is slow:** about 100 s per university answer on a free 2-vCPU Space, and the 4-bit GGUFs get 3 fewer gold facts than the fp16 setup (14 vs 17 of 18).
 - **Snapshot of a changing website:** university pages were fetched on 2026-10-20/21; rules and contacts may change.
 - **Not a counsellor:** the assistant answers information questions; it does not give medical, psychological or legal advice.
@@ -247,6 +247,8 @@ Everything runs on free Kaggle notebooks that clone this repo and run `python -m
 | `neurograph-50-graph` | Neo4j study graph + queries | CPU | 20, 30, 40, 42 + AuraDB secrets |
 | `neurograph-60-intake` | university intake, index, policy graph, literature graph, agent eval | GPU T4 | AuraDB secrets |
 | `neurograph-70-qlora` | Q&A pairs, QLoRA, base vs fine-tuned, agent eval, GGUF export | GPU T4 x2 | 60 + AuraDB secrets |
+
+Notebooks 60 and 70 also run outside Kaggle: their setup cells detect it and otherwise use the local checkout, `.venv` and `.env`. The outputs saved in these two notebooks come from such a run (one RTX 5060 Ti, 2026-10-22, against the AuraDB graph; see the repeat run in [`reports/results.md`](reports/results.md) §7).
 
 **On one local GPU instead:** [`scripts/local_pipeline.sh`](scripts/local_pipeline.sh) runs every step in order against a Docker Neo4j (paths and pins in its header; scikit-learn < 1.8, see section 4.7). Phase 9 (`run_benchmark`, `run_ragas`, `make_audit_sheet`) needs an Ollama server, or any OpenAI-compatible API, for the reference model and the judge ([`configs/benchmark.yaml`](configs/benchmark.yaml)).
 

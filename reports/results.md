@@ -218,6 +218,35 @@ Base vs fine-tuned on the 55 held-out examples (same prompt layout as the agent:
 
 The adapter learned the task's format (cite, refuse when the answer is missing) more than new facts. Side effect: 25% of its answers are fragments of ≤ 5 words ("80% and above [1]"), against none for the base model.
 
+### Repeat run: notebooks 60 and 70 executed end to end (2026-10-22)
+
+Both notebooks were executed on the same machine (commit `55f60c9`; the GGUF cell re-run at `4224df3` after a logging fix), and their outputs are saved in [`notebooks/`](../notebooks). This run wrote to its own folder. The benchmark, RAGAS, the audit sheet and the demo all still use the 2026-10-21 artifacts above. Two inputs changed between the runs:
+
+- **university pages:** fetched again. The passage text is identical, but the page bytes (and so the chunk ids) changed. That gives a different 20-chunk held-out split: train 340 (55 with the answer removed) / test 71 (10).
+- **PubMed:** the top 200 differs by two papers. The extraction error from PMID 36792002 (remitted depression, §6.4) dropped out, leaving 22 claims, 15 verified from 13 papers. The other 8 replication verdicts are unchanged. The frontal theta comparison, which rested only on that claim, is gone.
+
+| held-out university questions | run 1 base | run 1 QLoRA | run 2 base | run 2 QLoRA |
+|---|---|---|---|---|
+| n (answer removed) | 55 (11) | | 71 (10) | |
+| token F1 | 0.596 | 0.664 | 0.596 | 0.701 |
+| faithful (NLI) | 0.614 | 0.841 | 0.656 | 0.820 |
+| cites the right passage | 0.182 | 0.886 | 0.295 | 0.902 |
+| wrongly says "not in the passages" | 0.000 | 0.045 | 0.016 | 0.033 |
+| correctly says "not in the passages" | 0.455 | 0.818 | 0.700 | 1.000 |
+| fragments (≤ 5 words, answerable questions) | 0.00 | 0.25 | 0.00 | 0.08 |
+
+| agent, 24 gold questions | run 1 facts (of 18) | run 2 facts (of 18) |
+|---|---|---|
+| Qwen2.5-3B base | 16 | 17 |
+| + QLoRA on every route | 15 | 15 |
+| + QLoRA on the policy route only | 17 | 16 |
+
+Safety was 6/6 to referral and 0/18 normal questions referred in both runs, for every set-up.
+
+- **Replicates:** the held-out gains (citing the right passage about 0.9 vs 0.2–0.3, more faithful answers, more correct refusals), and the adapter hurting the research routes (15/18 when used everywhere, both runs).
+- **Does not replicate:** the routed set-up beating the base model on the gold set (+1 fact in run 1, −1 in run 2). Treat it as a tie. Keeping the adapter on the policy route is a design choice that avoids its losses on research questions, not a measured gain over base.
+- Run 2 misses with the routed set-up: a05 ("Below 40% is F" instead of naming D) and a08 (the adapter says the passages do not answer the AI-policy question).
+
 ## 8. Agent and demo app
 
 ### 8.1 Agent on the 24 gold questions (`scripts/run_agent_eval.py`; Neo4j with the study, policy and literature graphs)
@@ -231,7 +260,7 @@ Safety → router → dense retrieval + graph rules / study query / verified cla
 | **+ QLoRA on the policy route only** | 24/24 | 6/6 | **11/11** | **4/4** | 2/3 | **17/18** | **0.73** |
 
 - No normal question went to the safety referral; every distress or crisis message did (fixed text, contacts from the graph, 999).
-- The adapter was trained on university policy prompts only. On the study and literature routes it answers in fragments and drops PMID citations, so the agent and the demo keep it to the policy route (the base model answers research questions). This setting was chosen after seeing these 24 answers, so it is a design decision, not an independent test.
+- The adapter was trained on university policy prompts only. On the study and literature routes it answers in fragments and drops PMID citations, so the agent and the demo keep it to the policy route (the base model answers research questions). This setting was chosen after seeing these 24 answers, so it is a design decision, not an independent test. A repeat run gave 16/18 routed vs 17/18 base (see the repeat run in §7), so the routed set-up ties with base rather than beating it.
 - Remaining misses: a23 (literature: no PMID cited, all three set-ups); base a08 ("GenAI" instead of the expected "AI"; its content is reasonable).
 - Gold set fix: a20 expected Kaggle's 0.727 and the keyword "eeg_all", which cannot match the model name "eeg_all_cal"; the expectation now also accepts "eeg_all_cal" and 0.728 (the local graph's value), for every model alike.
 - **Verifier false positive found in the demo test:** the CPU GGUF answered "using ChatGPT for assignments is not permitted [3]", but the AI policy permits limited, cited use; the NLI check still marked it supported. Sentence-level NLI catches invented numbers and statements far from the passages, not wrong generalisations of a nuanced rule.
