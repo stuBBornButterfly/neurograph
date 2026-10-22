@@ -26,7 +26,9 @@ language: [en]
 
 
 def sh(cmd: str, cwd: str | None = None) -> str:
-    r = subprocess.run(cmd, shell=True, cwd=cwd, capture_output=True, text=True, stdin=subprocess.DEVNULL)
+    # own session: no controlling terminal, so llama-cli writes to the captured stdout (notebook ! commands run in a pty)
+    r = subprocess.run(cmd, shell=True, cwd=cwd, capture_output=True, text=True, stdin=subprocess.DEVNULL,
+                       start_new_session=True)
     if r.returncode:
         raise RuntimeError(f"{cmd}\n{r.stdout[-2000:]}\n{r.stderr[-2000:]}")
     return r.stdout
@@ -71,11 +73,12 @@ def main() -> None:
     reply = sh(f"{lcpp / 'build/bin/llama-cli'} -m {gguf} -sysf /tmp/smoke_sys.txt -f /tmp/smoke_user.txt -n 60 "
                f"--temp 0 -st -t 4 --log-disable 2>/dev/null")
     secs = time.perf_counter() - t
+    answer = reply.split(SMOKE_USER.splitlines()[-1])[-1].split("[ Prompt")[0].strip()  # drop the echo and stats
 
     print(f"== step 7.4 merge + GGUF export | commit {git_hash()} ==")
     print(f"merged {cfg['base_model']} + adapter -> {g['quant']} GGUF {gguf.stat().st_size / 1e9:.2f} GB "
           f"(f16 {f16.stat().st_size / 1e9:.2f} GB)")
-    print(f"llama.cpp CPU smoke test (4 threads, <= 60 tokens, {secs:.0f} s incl. load): {reply.strip()[-260:]!r}")
+    print(f"llama.cpp CPU smoke test (4 threads, <= 60 tokens, {secs:.0f} s incl. load): {answer[:260]!r}")
     repo = os.environ.get("HF_REPO")
     if os.environ.get("HF_TOKEN") and repo:
         from huggingface_hub import HfApi
