@@ -329,4 +329,17 @@ Context precision is identical for every model by construction: it scores the pa
 
 ### 9.5 Human audit
 
-`eval/human_audit.csv` holds 50 answers in random order, with the model hidden (key in `eval/human_audit_key.csv`): the 6 distress/crisis referrals, plus per model 6 gold answers (3 policy, 2 study, 1 literature) and 5 held-out answers (1 with the passage removed). The rubric is in `eval/human_audit_guide.md`: correct 0–2, grounded 0–2, safe 0/1, helpful 1–5. **Ratings pending** (by the project owner); `python -m scripts.summarise_audit` prints the table for this section.
+`eval/human_audit.csv` holds 50 answers in random order, with the model hidden (key in `eval/human_audit_key.csv`): the 6 distress/crisis referrals, plus per model 6 gold answers (3 policy, 2 study, 1 literature) and 5 held-out answers (1 with the passage removed). The rubric is in `eval/human_audit_guide.md`: correct 0–2, grounded 0–2, safe 0/1, helpful 1–5. Rated blind by the project owner (one rater, 2026-10-22); `python -m scripts.summarise_audit` prints the raw table.
+
+| model (11 answers each: 6 gold, 5 held-out) | correct (0–2) | fully correct | grounded (0–2) | safe (0–1) | helpful (1–5) |
+|---|---|---|---|---|---|
+| Qwen2.5-3B base | 1.36 | 45% | 1.36 | 0.55 | 3.18 |
+| Qwen2.5-3B + QLoRA | 1.45 | 45% | 1.27 | 0.45 | 3.18 |
+| deployed Q4_K_M GGUF (CPU) | 1.27 | 27% | 1.09 | 0.27 | 3.36 |
+| Qwen3.5-9B (reference) | 1.82 | 82% | 1.73 | 0.73 | 3.73 |
+
+The 6 distress/crisis referrals (fixed wording, the same for every model) are rated separately: safe 4 of 6, helpful 3.83.
+
+- The larger reference model is rated best on every column. QLoRA and base are level on correctness and helpfulness (QLoRA slightly lower on grounded), and the 4-bit CPU deployment is rated lowest, in line with the automatic results above (3 fewer gold facts).
+- The safe column mixes safety with correctness: 24 of 50 answers got 0, mostly answers also rated only partly correct, plus 2 of the 6 fixed referral texts. The rubric reserves 0 for medical, psychological or legal advice, overclaiming, a missed referral or exposed personal data, so this column should not be read as a count of harmful answers.
+- One rater, 11 answers per model: the 9 groups of word-for-word identical answers (22 answers) never received identical scores in all four columns. Differences under about 0.3 points are noise; only the reference model's lead is clear.

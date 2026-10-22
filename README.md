@@ -14,7 +14,7 @@ An EEG mental-health research pipeline that ends in a knowledge graph: resting-s
 | 6 | University pages with PII redaction, search index, policy graph, PubMed literature graph | ✅ 100 passages, 0 PII leaks, 16 verified claims |
 | 7 | QLoRA fine-tune of Qwen2.5-3B, GGUF export | ✅ |
 | 8 | LangGraph agent (safety node, graph verification), FastAPI + Streamlit demo with logs and feedback | ✅ runs locally with Docker; model on Hugging Face |
-| 9 | Evaluation: gold questions, RAGAS, base vs fine-tuned vs a larger reference model, human audit | ✅ (audit ratings pending) |
+| 9 | Evaluation: gold questions, RAGAS, base vs fine-tuned vs a larger reference model, human audit | ✅ |
 
 ---
 
@@ -192,7 +192,7 @@ On 24 hand-written gold questions (11 university policy, 4 study-graph, 3 litera
 
 Context precision is identical for every model by construction: it scores the passages in the prompt, which are the same for all models, with the right passage placed at a random position among four. It says nothing about the models. The two automatic faithfulness measures disagree on the gold policy answers (RAGAS: base 0.95, QLoRA 0.80; NLI verifier pass rate: base 0.55, QLoRA 0.73). The judge also makes visible mistakes: it scored a verbatim quote from the page (a07, "Re-evaluation of Scripts of Final Examinations is not allowed.") as 0.0 faithful, and identical base and routed literature answers got 1.00 vs 0.94. Differences under about 0.1 are therefore not meaningful at these sample sizes. Clearer signals: QLoRA's terse answers lower answer relevancy on held-out questions (0.69 vs 0.89), and the 4-bit deployment is the least faithful on the gold set (0.80). n 29 = a fragment answer with no checkable statement.
 
-**Human audit:** a blind, stratified sheet of 50 answers with a rubric ([`eval/`](eval)); ratings by the project owner are pending.
+**Human audit** (blind, one rater, 11 answers per model, rubric in [`eval/`](eval)): the reference model is rated best (correct 1.82 of 2, 82% fully correct), QLoRA and base are level (1.45 vs 1.36), and the 4-bit CPU deployment lowest (1.27). Identical answers did not always get identical scores, so only the reference model's lead is clear ([results §9.5](reports/results.md#95-human-audit)).
 
 ### Demo
 
@@ -214,7 +214,7 @@ Optional: the `NEO4J_*` variables for the live graph instead of the snapshot. Th
 
 - **Small, partly synthetic test sets:** 24 hand-written gold questions and 55 held-out synthetic questions (written by another model, so cleaner than real student questions). Differences of one or two answers are noise.
 - **No commercial API in the benchmark:** no API key was available for this run, so the "API" row is a larger self-hosted model (Qwen3.5-9B through Ollama). The harness takes any OpenAI-compatible API (`configs/benchmark.yaml`), and the token counts give the cost at any list price.
-- **Automatic judges are models too:** RAGAS uses a local 9B judge (Gemma 2), and faithfulness uses NLI; both are imperfect, and whole-answer NLI penalises long answers. The human audit is the reference, and its ratings are still pending.
+- **Automatic judges are models too:** RAGAS uses a local 9B judge (Gemma 2), and faithfulness uses NLI; both are imperfect, and whole-answer NLI penalises long answers. The human audit has a single rater who scored identical answers differently, so it is a rough check, not ground truth.
 - **The verifier can be wrong:** sentence-level NLI passed an over-generalised AI-policy answer ("ChatGPT is not permitted", but the policy allows limited cited use), and the direction check was added after a swapped direction slipped through. A "checked" badge means the sources were consulted, not that the answer is right.
 - **Configuration chosen on the same gold set:** using the adapter on the policy route only was decided after seeing the 24 gold answers, and a repeat run did not confirm that it beats the base model (16 vs 17 of 18).
 - **CPU demo is slow:** about 100 s per policy answer on 2 CPU cores, and the 4-bit GGUFs get 3 fewer gold facts than the fp16 setup (14 vs 17 of 18).
