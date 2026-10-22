@@ -13,7 +13,7 @@ An EEG mental-health research pipeline that ends in a knowledge graph: resting-s
 | 5 | Study graph in Neo4j AuraDB + 10 Cypher queries | ✅ |
 | 6 | university pages with PII redaction, search index, policy graph, PubMed literature graph | ✅ 100 passages, 0 PII leaks, 16 verified claims |
 | 7 | QLoRA fine-tune of Qwen2.5-3B, GGUF export | ✅ |
-| 8 | LangGraph agent (safety node, graph verification), FastAPI + Streamlit demo with logs and feedback | ✅ Space files ready |
+| 8 | LangGraph agent (safety node, graph verification), FastAPI + Streamlit demo with logs and feedback | ✅ runs locally with Docker; model on Hugging Face |
 | 9 | Evaluation: gold questions, RAGAS, base vs fine-tuned vs a larger reference model, human audit | ✅ (audit ratings pending) |
 
 ---
@@ -31,7 +31,7 @@ An EEG mental-health research pipeline that ends in a knowledge graph: resting-s
 | Literature graph: PubMed claims, NLI check, replication in our data | [`literature/`](src/neurograph/literature), [`agent/replication.py`](src/neurograph/agent/replication.py) | [claims + replication](reports/results.md#64-literature-graph-scriptsbuild_literature_graphpy) |
 | QLoRA fine-tune and GGUF export | [`scripts/train_qlora.py`](scripts/train_qlora.py), [`finetune/`](src/neurograph/finetune) | [base vs QLoRA](reports/results.md#7-qlora-fine-tune-local-run-rtx-5060-ti-16-gb) |
 | Agent: safety node, router, verifier | [`agent/`](src/neurograph/agent) | [gold questions](reports/results.md#81-agent-on-the-24-gold-questions-scriptsrun_agent_evalpy-neo4j-with-the-study-policy-and-literature-graphs) |
-| Demo app (FastAPI + Streamlit) and Space | [`app/`](src/neurograph/app), [`space/`](space) | [demo](#demo) |
+| Demo app (FastAPI + Streamlit, Docker) | [`app/`](src/neurograph/app), [`space/`](space) | [demo](#demo) |
 | Evaluation: benchmark, RAGAS, human audit | [`scripts/run_benchmark.py`](scripts/run_benchmark.py), [`eval/`](eval) | [evaluation](#evaluation) |
 
 ## Key findings
@@ -196,20 +196,19 @@ Context precision is identical for every model by construction: it scores the pa
 
 ### Demo
 
-**Live demo:** _Hugging Face Space link to be added_ (free CPU: about 100 s per university answer, 40–50 s per research answer).
+**Fine-tuned model:** [stuBBornButterfly/neurograph-qwen2.5-3b-gguf](https://huggingface.co/stuBBornButterfly/neurograph-qwen2.5-3b-gguf) (Q4_K_M GGUF, 1.93 GB, with the model card). The demo runs locally with Docker on CPU (about 100 s per university answer and 40–50 s per research answer on 2 CPU cores); it is not hosted, because Hugging Face Docker Spaces now need a paid plan.
 
 ![demo](reports/figures/demo_app.png)
 
-The Space runs one Docker image ([`space/`](space)): FastAPI (`/ask`, `/feedback`, `/stats`, `/health`) behind a Streamlit chat page. It uses the fine-tuned Q4_K_M GGUF for university questions and Qwen's own base Q4_K_M GGUF for research questions (llama.cpp), BGE + Qdrant, and the NLI verifier. The knowledge graph is either live (Neo4j secrets) or a 19 kB snapshot of aggregates and computed facts, never per-participant values. Every answer and 👍/👎 vote goes to a JSON-lines log with personal details redacted by the intake's Presidio rules (distress messages are not stored); the sidebar shows answers per route, verification rate, latency and feedback, and the log can be pushed to a private dataset every 10 minutes.
+The demo is one Docker image ([`space/`](space)): FastAPI (`/ask`, `/feedback`, `/stats`, `/health`) behind a Streamlit chat page. It uses the fine-tuned Q4_K_M GGUF for university questions and Qwen's own base Q4_K_M GGUF for research questions (llama.cpp), BGE + Qdrant, and the NLI verifier. The knowledge graph is either live (Neo4j secrets) or a 19 kB snapshot of aggregates and computed facts, never per-participant values. Every answer and 👍/👎 vote goes to a JSON-lines log with personal details redacted by the intake's Presidio rules (distress messages are not stored); the sidebar shows answers per route, verification rate, latency and feedback, and the log can be pushed to a private dataset every 10 minutes.
 
-To deploy it under your own account:
+Run it locally (Docker, about 8 GB free RAM; the first start downloads the two GGUFs, ~4 GB):
 
-1. Put the GGUF in a model repo: run notebook 70 with the secrets `HF_TOKEN` and `HF_REPO`, or `hf upload <user>/neurograph-qwen2.5-3b-gguf <path>/neurograph-qwen2.5-3b-Q4_K_M.gguf`.
-2. Build the Space folder: `python -m scripts.export_graph_snapshot && python -m scripts.build_space`.
-3. Create a Space (SDK **Docker**, free CPU) and upload the folder: `hf upload <user>/neurograph-assistant dist/space . --repo-type space`.
-4. In Space settings, set the variable `GGUF_REPO=<user>/neurograph-qwen2.5-3b-gguf`. Optional: `LOG_DATASET` + `HF_TOKEN` to keep the logs; the `NEO4J_*` secrets for the live graph.
+1. Build the image folder: `python -m scripts.export_graph_snapshot && python -m scripts.build_space` (needs the intake's `institutional/chunks.jsonl` from notebook 60 in the derivatives folder; the snapshot is read from Neo4j once and then bundled).
+2. `docker build -t neurograph-demo dist/space`
+3. `docker run -p 7860:7860 -e GGUF_REPO=stuBBornButterfly/neurograph-qwen2.5-3b-gguf neurograph-demo`, then open http://localhost:7860.
 
-Run it locally: `docker build -t neurograph-space dist/space && docker run -p 7860:7860 -e GGUF_REPO=<user>/neurograph-qwen2.5-3b-gguf neurograph-space`, then open http://localhost:7860.
+Optional: the `NEO4J_*` variables for the live graph instead of the snapshot. The same folder also runs as a Hugging Face Docker Space (paid plan): upload it with `hf upload <user>/<space> dist/space . --repo-type space` and set the variable `GGUF_REPO`.
 
 ### Assistant limitations
 
@@ -218,7 +217,7 @@ Run it locally: `docker build -t neurograph-space dist/space && docker run -p 78
 - **Automatic judges are models too:** RAGAS uses a local 9B judge (Gemma 2), and faithfulness uses NLI; both are imperfect, and whole-answer NLI penalises long answers. The human audit is the reference, and its ratings are still pending.
 - **The verifier can be wrong:** sentence-level NLI passed an over-generalised AI-policy answer ("ChatGPT is not permitted", but the policy allows limited cited use), and the direction check was added after a swapped direction slipped through. A "checked" badge means the sources were consulted, not that the answer is right.
 - **Configuration chosen on the same gold set:** using the adapter on the policy route only was decided after seeing the 24 gold answers, and a repeat run did not confirm that it beats the base model (16 vs 17 of 18).
-- **CPU demo is slow:** about 100 s per university answer on a free 2-vCPU Space, and the 4-bit GGUFs get 3 fewer gold facts than the fp16 setup (14 vs 17 of 18).
+- **CPU demo is slow:** about 100 s per university answer on 2 CPU cores, and the 4-bit GGUFs get 3 fewer gold facts than the fp16 setup (14 vs 17 of 18).
 - **Snapshot of a changing website:** university pages were fetched on 2026-10-20/21; rules and contacts may change.
 - **Not a counsellor:** the assistant answers information questions; it does not give medical, psychological or legal advice.
 
@@ -267,7 +266,7 @@ src/neurograph/finetune/    Q&A dataset for QLoRA
 src/neurograph/agent/       LangGraph workflow, safety node, graph tools, replication stats, verifier, LLM backends
 src/neurograph/app/         FastAPI, Streamlit page, interaction log
 scripts/                thin entry points (python -m scripts.<name>)
-space/                  Hugging Face Space (Docker) files
+space/                  demo Docker image (also a Hugging Face Space)
 eval/                   gold questions, human-audit sheet and guide
 notebooks/              the Kaggle notebooks, one per phase
 reports/                results.md and figures/

@@ -267,7 +267,7 @@ Safety → router → dense retrieval + graph rules / study query / verified cla
 
 ### 8.2 Demo app (`src/neurograph/app/`, `space/`)
 
-FastAPI (`/ask`, `/feedback`, `/stats`, `/health`) behind a Streamlit chat page, in one Docker image for a free Hugging Face Space (CPU): the fine-tuned Q4_K_M GGUF for university questions and Qwen's own base Q4_K_M GGUF for research questions (llama.cpp), BGE-small + Qdrant, the DeBERTa NLI verifier, and the knowledge graph either live (Neo4j secrets) or from a 19 kB snapshot of aggregates (`scripts/export_graph_snapshot.py`: counts, means and verdicts, never per-participant values). Monitoring: every answer and 👍/👎 vote goes to a JSON-lines log with PII redacted by the same Presidio rules as the intake (distress and crisis messages are not stored); the sidebar shows answers per route, verification rate, latency and feedback, and the log can be pushed to a private HF dataset every 10 minutes.
+FastAPI (`/ask`, `/feedback`, `/stats`, `/health`) behind a Streamlit chat page, in one Docker image (CPU; runs locally or as a Hugging Face Docker Space): the fine-tuned Q4_K_M GGUF for university questions and Qwen's own base Q4_K_M GGUF for research questions (llama.cpp), BGE-small + Qdrant, the DeBERTa NLI verifier, and the knowledge graph either live (Neo4j secrets) or from a 19 kB snapshot of aggregates (`scripts/export_graph_snapshot.py`: counts, means and verdicts, never per-participant values). Monitoring: every answer and 👍/👎 vote goes to a JSON-lines log with PII redacted by the same Presidio rules as the intake (distress and crisis messages are not stored); the sidebar shows answers per route, verification rate, latency and feedback, and the log can be pushed to a private HF dataset every 10 minutes.
 
 ## 9. Evaluation (local run, 2026-10-21; `scripts/run_benchmark.py`, `run_ragas.py`, `make_audit_sheet.py`)
 
@@ -309,7 +309,7 @@ Same prompts, same retrieved passages and graph facts for every model; greedy de
 | routed, Q4_K_M GGUFs on CPU (as deployed) | 1164 / 28 | 0.00 | 2.52 | CPU |
 | Qwen3.5-9B via Ollama (self-hosted API) | 1196 / 70 | 0.00 | 0.51 | 0.09 |
 
-All rows are self-hosted, so the API bill is $0. For a commercial API with list prices in $ per million tokens, 1,000 questions cost (input tokens × input price + output tokens × output price) / 1,000 dollars, with the per-question token counts above (about 1,200 in and 25–70 out per question; prices change, so none are hard-coded). Compute hours are wall-clock model time on one RTX 5060 Ti (GPU rows, 180 W board power for the energy estimate) or 8 CPU threads (deployed row). On the free 2-vCPU Space the deployed setup takes ~100 s per university answer and 40–50 s per research answer.
+All rows are self-hosted, so the API bill is $0. For a commercial API with list prices in $ per million tokens, 1,000 questions cost (input tokens × input price + output tokens × output price) / 1,000 dollars, with the per-question token counts above (about 1,200 in and 25–70 out per question; prices change, so none are hard-coded). Compute hours are wall-clock model time on one RTX 5060 Ti (GPU rows, 180 W board power for the energy estimate) or 8 CPU threads (deployed row). On 2 CPU cores (Docker limited to 2 CPUs) the deployed setup takes ~100 s per university answer and 40–50 s per research answer.
 
 ### 9.4 RAGAS (judge Gemma 2 9B through Ollama, a different model family from every contestant)
 
