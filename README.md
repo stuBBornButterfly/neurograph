@@ -247,6 +247,8 @@ Everything runs on free Kaggle notebooks that clone this repo and run `python -m
 | `neurograph-60-intake` | University intake, index, policy graph, literature graph, agent eval | GPU T4 | AuraDB secrets |
 | `neurograph-70-qlora` | Q&A pairs, QLoRA, base vs fine-tuned, agent eval, GGUF export | GPU T4 x2 | 60 + AuraDB secrets |
 
+The repo does not name the university: its website and name come from three private settings, `SITE_URL` (the public website), `SITE_NAME` (as the assistant introduces itself) and `SITE_SHORT` (short name, also used in some page addresses), set as Kaggle Secrets or in `.env` (see [`.env.example`](.env.example)). Without them the configs point at the placeholder `university.example`.
+
 Notebooks 60 and 70 also run outside Kaggle: their setup cells detect it and otherwise use the local checkout, `.venv` and `.env`. The outputs saved in these two notebooks come from such a run (one RTX 5060 Ti, 2026-10-22, against the AuraDB graph; see the repeat run in [`reports/results.md`](reports/results.md) §7).
 
 **On one local GPU instead:** [`scripts/local_pipeline.sh`](scripts/local_pipeline.sh) runs every step in order against a Docker Neo4j (paths and pins in its header; scikit-learn < 1.8, see section 4.7). Phase 9 (`run_benchmark`, `run_ragas`, `make_audit_sheet`) needs an Ollama server, or any OpenAI-compatible API, for the reference model and the judge ([`configs/benchmark.yaml`](configs/benchmark.yaml)).

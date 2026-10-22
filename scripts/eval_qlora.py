@@ -88,7 +88,7 @@ def write_card(out: Path, cfg: dict, table: pd.DataFrame, n_test: int) -> None:
     n_train = sum(1 for _ in (out / "train.jsonl").open(encoding="utf-8"))
     (out / "model_card.md").write_text(f"""# NeuroGraph university assistant adapter (QLoRA)
 
-LoRA adapter for **{cfg['base_model']}** that answers the university student questions from retrieved
+LoRA adapter for **{cfg['base_model']}** that answers university student questions from retrieved
 passages, cites the passage it used, and says so when the passages do not contain the answer.
 
 - **Training data:** {n_train} question-answer examples written by {cfg['teacher_model']} (self-hosted) from 19 public

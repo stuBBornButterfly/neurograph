@@ -4,7 +4,7 @@ llm:
   gguf_repo: ""                # env GGUF_REPO: Hugging Face model repo with the GGUF, e.g. <user>/neurograph-qwen2.5-3b-gguf
   gguf_file: neurograph-qwen2.5-3b-Q4_K_M.gguf
   gguf_path: ""                # env GGUF_PATH: a local GGUF file instead of downloading
-  research_model: base         # study + literature routes: base (the adapter is trained on university policy prompts only) | finetuned
+  research_model: base         # study + literature routes: base (the adapter is trained on policy prompts only) | finetuned
   base_gguf_repo: Qwen/Qwen2.5-3B-Instruct-GGUF   # Qwen's own Q4_K_M build of the base model
   base_gguf_file: qwen2.5-3b-instruct-q4_k_m.gguf
   base_gguf_path: ""           # env BASE_GGUF_PATH: a local copy instead of downloading

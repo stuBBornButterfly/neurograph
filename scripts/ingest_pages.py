@@ -63,7 +63,7 @@ def main() -> None:
     (out / "chunks.jsonl").write_text("\n".join(json.dumps(c, ensure_ascii=False) for c in chunks) + "\n",
                                       encoding="utf-8")
 
-    print(f"== step 6.1 university intake: fetch -> clean -> PII redaction -> chunks | commit {git_hash()} ==")
+    print(f"== step 6.1 intake: fetch -> clean -> PII redaction -> chunks | commit {git_hash()} ==")
     print(f"approved {len(approved_urls(cfg))} | skipped {len(skipped)} | ingested {len(docs)} "
           f"(html {sum(d['kind'] == 'html' for d in docs)}, pdf {sum(d['kind'] == 'pdf' for d in docs)})")
     print(f"\n{'group':17s} {'words':>6s} {'chunks':>6s}  {'PERSON':>6s} {'EMAIL':>5s} {'PHONE':>5s}  title")

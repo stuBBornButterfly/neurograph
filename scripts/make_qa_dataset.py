@@ -21,7 +21,7 @@ class EchoTeacher:
         out = []
         for u in users:
             line = next((l for l in u.split("\n")[1:] if len(l.split()) > 5), u.split("\n")[1])
-            out.append(json.dumps([{"question": f"What does university say about {line.split()[0].lower()} here?",
+            out.append(json.dumps([{"question": f"What does the university say about {line.split()[0].lower()} here?",
                                     "answer": line[:200]}]))
         return out
 
@@ -97,7 +97,7 @@ def main() -> None:
     for split in ("train", "test"):
         df[df.split == split].to_json(out / f"{split}.jsonl", orient="records", lines=True, force_ascii=False)
 
-    print(f"== step 7.1 Q&A dataset from university pages | commit {git_hash()} ==")
+    print(f"== step 7.1 Q&A dataset from the university pages | commit {git_hash()} ==")
     print(f"teacher {name} | chunks {len(chunks)} | pairs parsed {len(pairs)} | NLI-kept {len(kept)} "
           f"({len(kept) / max(len(pairs), 1):.0%}, answer entailed by its chunk) | generation {t_gen:.0f} s")
     print(f"test pairs dropped because a neighbouring training chunk states the same answer: {len(leaked)}")

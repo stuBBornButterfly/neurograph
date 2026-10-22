@@ -3,6 +3,8 @@ import re
 from presidio_analyzer import AnalyzerEngine, Pattern, PatternRecognizer, RecognizerResult
 from presidio_analyzer.nlp_engine import NlpEngineProvider
 
+from neurograph.config import site
+
 TAGS = {"PERSON": "<PERSON>", "EMAIL_ADDRESS": "<EMAIL>", "PHONE_NUMBER": "<PHONE>"}
 # names after an honorific ("Dr. Farida Begum", "Md. Abu Syeed"); spaCy's small model misses many Bangla names
 HONORIFIC = r"\b(?:Dr|Md|Mr|Mrs|Ms|Prof|Engr)\.?[ ]?[A-Z][a-zA-Z]+(?:\.?[ ][A-Z][a-zA-Z]+){0,4}"  # one line only
@@ -22,8 +24,8 @@ def build_analyzer(model: str) -> AnalyzerEngine:
 
 
 ROLE = re.compile(r"Office|Room|Ext|Department|Dept|Registrar|Officer|Counsel|Proctor|Professor|Director|Advisor|"
-                  r"Head|Nurse|Lecturer|Dean|Manager|Assistant|Asst|Coordinator|Science|Engineering|University|university|"
-                  r"Welfare|Medical|Center|Centre|Policy|Committee")
+                  r"Head|Nurse|Lecturer|Dean|Manager|Assistant|Asst|Coordinator|Science|Engineering|University|"
+                  r"Welfare|Medical|Center|Centre|Policy|Committee|" + re.escape(site()["short"]))
 
 
 def directory_names(text: str) -> list[RecognizerResult]:

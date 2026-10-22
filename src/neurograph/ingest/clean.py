@@ -16,7 +16,7 @@ def normalise(text: str) -> str:
 
 
 def html_text(raw: bytes, start_prefix: str, stop_markers: list[str]) -> tuple[str, str]:
-    # university pages: main content starts after the breadcrumb ("Home/...") and ends at the footer or side menu
+    # the site's pages: main content starts after the breadcrumb ("Home/...") and ends at the footer or side menu
     soup = BeautifulSoup(raw, "html.parser")
     title = normalise(soup.title.get_text(strip=True)) if soup.title else ""
     for t in soup(["script", "style", "noscript"]):

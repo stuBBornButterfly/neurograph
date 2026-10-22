@@ -5,7 +5,7 @@ import requests
 import streamlit as st
 
 API = os.environ.get("API_URL", "http://127.0.0.1:8000")
-ROUTES = {"policy": "The university pages", "study": "EEG study graph", "literature": "published research",
+ROUTES = {"policy": "university pages", "study": "EEG study graph", "literature": "published research",
           "safety:crisis": "safety referral", "safety:distress": "support referral"}
 EXAMPLES = ["What CGPA puts me on academic probation?", "Can I use ChatGPT for my assignments?",
             "Does our EEG data replicate frontal alpha asymmetry in depression?",
@@ -48,16 +48,16 @@ def vote(res_id: str, v: str) -> None:
 
 health = wait_for_api()
 st.title("NeuroGraph assistant")
-st.caption("The university student questions (rules, deadlines, services) and the NeuroGraph EEG research database, "
+st.caption("Student questions (rules, deadlines, services) and the NeuroGraph EEG research database, "
            "answered from public sources and checked before they are shown.")
 st.warning(health["disclaimer"], icon="⚠️")
 
 with st.sidebar:
     st.subheader("How it works")
-    st.markdown("Safety check → router → university page search or knowledge-graph query → Qwen2.5-3B (QLoRA fine-tune for "
-                "The university questions, base model for research) → verifier (numbers must be in the sources, each sentence "
+    st.markdown("Safety check → router → policy page search or knowledge-graph query → Qwen2.5-3B (QLoRA fine-tune for "
+                "policy questions, base model for research) → verifier (numbers must be in the sources, each sentence "
                 "checked by an NLI model, effect directions checked against the statistics).")
-    st.markdown(f"**Model:** {health['llm']}  \n**Graph:** {health['graph']}  \n**university passages:** {health['chunks']}")
+    st.markdown(f"**Model:** {health['llm']}  \n**Graph:** {health['graph']}  \n**Policy passages:** {health['chunks']}")
     st.subheader("Monitoring")
     s = api("GET", "/stats")
     st.markdown(f"answers {s['answers']} · verified {s['verified_share'] if s['verified_share'] is not None else '-'}  \n"

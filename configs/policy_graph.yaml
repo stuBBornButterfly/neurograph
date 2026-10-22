@@ -1,20 +1,20 @@
-# Phase 6.3: The university policy graph. Rules are curated by hand, but every quote must appear verbatim in the
+# Phase 6.3: university policy graph. Rules are curated by hand, but every quote must appear verbatim in the
 # redacted page text (the loader refuses otherwise), so the graph can only state what the page states.
 services:
   - id: psychosocial_counselling
     name: Psychosocial counselling (Department of Students' Welfare)
     office: Office of the Students' Welfare
     location: Room 301
-    contact_public: swd@university.example
-    url: https://www.university.example/admin-office/office-of-the-students-welfare
+    contact_public: swd@${SITE_DOMAIN}
+    url: ${SITE_URL}/admin-office/office-of-the-students-welfare
     keywords: [psychosocial, counsel, mental health, wellbeing]
     supports: [depression, anxiety, stress]
   - id: career_counselling
     name: Career Counseling Center (CCC)
     office: Department of Students' Welfare
     location: Room 301
-    contact_public: ccc@university.example
-    url: https://www.university.example/career-counseling-center
+    contact_public: ccc@${SITE_DOMAIN}
+    url: ${SITE_URL}/career-counseling-center
     keywords: [career counseling, internship, job]
     supports: [career]
   - id: medical_centre
@@ -22,31 +22,31 @@ services:
     office: Medical Centre
     location: campus
     contact_public: "09666775577, Ext. 285"
-    url: https://www.university.example/admin-office/university-medical-centre
+    url: ${SITE_URL}/admin-office/${SITE_SLUG}-medical-centre
     keywords: [medical, doctor, nurse]
     supports: [physical health]
   - id: proctor
     name: Office of the Proctor
     office: Office of the Proctor
     location: Room 629
-    contact_public: info@university.example
-    url: https://www.university.example/admin-office/office-of-the-proctor
+    contact_public: info@${SITE_DOMAIN}
+    url: ${SITE_URL}/admin-office/office-of-the-proctor
     keywords: [proctor, discipline, disciplinary]
     supports: [safety]
   - id: controller_exams
     name: Office of the Controller of Examinations
     office: Office of the Controller of Examinations
     location: campus
-    contact_public: info@university.example
-    url: https://www.university.example/admin-office/office-of-the-controller-of-examination
+    contact_public: info@${SITE_DOMAIN}
+    url: ${SITE_URL}/admin-office/office-of-the-controller-of-examination
     keywords: [controller of examination, re-scrutiny, grade report, incomplete grade form]
     supports: []
   - id: registrar
     name: Office of the Registrar
     office: Office of the Registrar
     location: campus
-    contact_public: info@university.example
-    url: https://www.university.example/admin-office/office-of-the-registrar
+    contact_public: info@${SITE_DOMAIN}
+    url: ${SITE_URL}/admin-office/office-of-the-registrar
     keywords: [registrar, transcript, certificate]
     supports: []
 
@@ -54,45 +54,45 @@ rules:                         # subject / condition / value + the exact sentenc
   - subject: probation
     condition: CGPA between 1 and 2.25 after the first two or any later semesters
     value: placed on probation for the next two semesters
-    url: https://www.university.example/grades-rules-and-regulations
+    url: ${SITE_URL}/grades-rules-and-regulations
     quote: "whose CGPA will be between 1 and 2.25 after the first two or any subsequent semesters, will be placed on probation for the next two semesters"
   - subject: probation
     condition: CGPA still below 2.25 after the probation period
     value: dismissal from the university
-    url: https://www.university.example/grades-rules-and-regulations
+    url: ${SITE_URL}/grades-rules-and-regulations
     quote: "Failure to raise their CGPA to at least 2.25 after the probation period"
   - subject: academic dismissal
     condition: CGPA below 1.0 after the first two or any later semesters
     value: automatic dismissal
-    url: https://www.university.example/grades-rules-and-regulations
+    url: ${SITE_URL}/grades-rules-and-regulations
     quote: "whose CGPA falls below 1.0 after the first two or any subsequent semesters, will be automatically dismissed from the university"
   - subject: passing grade
     condition: 40% to less than 45%
     value: D (2.00), the lowest passing grade; below 40% is F
-    url: https://www.university.example/grades-rules-and-regulations
+    url: ${SITE_URL}/grades-rules-and-regulations
     quote: "The letter grades A, B, C, and D are considered passing grades. The grade F is the failing grade."
   - subject: retake
     condition: improving a passed course
     value: a particular course may be retaken only once
-    url: https://www.university.example/grades-rules-and-regulations
+    url: ${SITE_URL}/grades-rules-and-regulations
     quote: "students will be allowed to retake a particular course only once with any grade he/she earned previously"
   - subject: retake
     condition: course failed with F
     value: may be retaken any number of times within the graduation time limit; the last attempt counts
-    url: https://www.university.example/grades-rules-and-regulations
+    url: ${SITE_URL}/grades-rules-and-regulations
     quote: "A student with 'F' Grade(s) in a course(s) may Retake the same any number of times to pass within the time limit allowed for Graduation."
   - subject: withdrawal
     condition: course dropped officially within the Academic Calendar date
     value: grade W
-    url: https://www.university.example/grades-rules-and-regulations
+    url: ${SITE_URL}/grades-rules-and-regulations
     quote: "The grade \"Withdrawal\" (W) is assigned when a student officially drops a course within the date mentioned in the Academic Calendar for the semester."
   - subject: leave of absence
     condition: student in good academic standing
     value: up to three consecutive semesters, granted through the Dean of the faculty
-    url: https://www.university.example/grades-rules-and-regulations
+    url: ${SITE_URL}/grades-rules-and-regulations
     quote: "Leave of absence or dropping a semester may be granted for up to three consecutive semesters/ one academic year to a student in good academic standing"
   - subject: re-scrutiny
     condition: error in marking or counting of a final exam script
     value: re-scrutiny only (no re-evaluation); grade change within 7 days of the next semester
-    url: https://www.university.example/grades-rules-and-regulations
+    url: ${SITE_URL}/grades-rules-and-regulations
     quote: "Re-evaluation of Scripts of Final Examinations is not allowed."

@@ -22,8 +22,8 @@ async def lifespan(_: FastAPI):
         state["log"].scheduler.trigger()  # last push of the log before shutdown
 
 
-app = FastAPI(title="NeuroGraph university assistant", version="1.0", lifespan=lifespan,
-              description="Answers from public university pages and the NeuroGraph knowledge graph, checked before they are "
+app = FastAPI(title="NeuroGraph student assistant", version="1.0", lifespan=lifespan,
+              description="Answers from a university's public pages and the NeuroGraph knowledge graph, checked before they are "
                           "shown. " + DISCLAIMER)
 
 

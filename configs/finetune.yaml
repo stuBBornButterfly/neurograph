@@ -1,4 +1,4 @@
-# Phase 7: QLoRA on the university public pages (retrieval-augmented fine-tuning: answer from passages, cite, or say "not in the passages")
+# Phase 7: QLoRA on the university's public pages (retrieval-augmented fine-tuning: answer from passages, cite, or say "not in the passages")
 chunks_glob: /kaggle/input/**/institutional/chunks.jsonl   # notebook 60 output; falls back to <derivatives>/institutional
 out: qlora                                                # under <derivatives>
 base_model: Qwen/Qwen2.5-3B-Instruct      # the model the agent uses; QLoRA trains small adapters on top of it

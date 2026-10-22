@@ -5,10 +5,13 @@ from langgraph.graph import END, StateGraph
 
 from neurograph.agent import safety
 from neurograph.agent.tools import LIT_WORDS, STUDY_WORDS, rows_text
+from neurograph.config import site
 
-POLICY_SYSTEM = ("You are the the university student information assistant. Answer ONLY from the numbered "
+SITE = site()  # the university's name comes from private settings
+
+POLICY_SYSTEM = (f"You are the {SITE['name']} student information assistant. Answer ONLY from the numbered "
                  "passages and rules below. Cite passages like [1]. Keep numbers exactly as written. If the passages "
-                 "do not contain the answer, say you don't know and suggest the relevant university office. Be brief "
+                 f"do not contain the answer, say you don't know and suggest the relevant {SITE['short']} office. Be brief "
                  "(at most 5 sentences). You do not give medical, psychological or legal advice.")
 STUDY_SYSTEM = ("You explain results from the NeuroGraph EEG research database. Use ONLY the query results and the "
                 "facts computed in Python; copy numbers exactly; do not add statistics of your own. If a verdict is "
@@ -37,7 +40,7 @@ def expand(question: str, expansions: dict[str, str]) -> str:
 
 def build_agent(index, tools, llm, verifier, cfg: dict, research_llm=None):
     # research_llm: model for the study and literature routes (default: llm); the QLoRA adapter is trained on
-    # university policy prompts only, so it can be kept to the policy route
+    # policy prompts only, so it can be kept to the policy route
     k = cfg["agent"]["context_k"]
     rllm = research_llm or llm
 

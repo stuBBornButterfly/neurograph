@@ -9,7 +9,7 @@ from pathlib import Path
 from neurograph.config import REPO_ROOT, load_config
 
 DISCLAIMER = ("Research prototype. Not a diagnostic tool and not a counsellor. In an emergency in Bangladesh call 999; "
-              "The university students can talk to the psychosocial counsellors (Department of Students' Welfare, Room 301).")
+              "students can talk to the university's psychosocial counsellors (Department of Students' Welfare, Room 301).")
 
 
 def setting(value, env: str):
@@ -22,7 +22,7 @@ def app_dir(cfg: dict, key: str, env: str) -> Path:
 
 
 def make_llm(cfg: dict, rag: dict):
-    # (policy model, study/literature model, description); the QLoRA adapter is trained on university policy prompts only,
+    # (policy model, study/literature model, description); the QLoRA adapter is trained on policy prompts only,
     # so by default the research routes use the base model
     c = cfg["llm"]
     backend, base_research = setting(c["backend"], "LLM_BACKEND"), setting(c["research_model"], "RESEARCH_MODEL") == "base"
@@ -40,14 +40,14 @@ def make_llm(cfg: dict, rag: dict):
             return llm, llm, f"{Path(path).name} (llama.cpp, CPU)"
         base = setting(c["base_gguf_path"], "BASE_GGUF_PATH") or hf_hub_download(c["base_gguf_repo"], c["base_gguf_file"])
         return (llm, LlamaCppLLM(base, c["max_new_tokens"], n_ctx=c["n_ctx"]),
-                f"{Path(path).name} for university questions, {Path(base).name} for research (llama.cpp, CPU)")
+                f"{Path(path).name} for policy questions, {Path(base).name} for research (llama.cpp, CPU)")
     if backend == "transformers":
         from neurograph.agent.llm import AdapterOff, LocalLLM
         adapter = setting(c["adapter"], "ADAPTER") or None
         llm = LocalLLM(rag["llm"]["model"], c["max_new_tokens"], adapter=adapter)
         name = rag["llm"]["model"] + (" + QLoRA adapter" if adapter else "")
         if adapter and base_research:
-            return llm, AdapterOff(llm), name + " (adapter on university questions only)"
+            return llm, AdapterOff(llm), name + " (adapter on policy questions only)"
         return llm, llm, name
     if backend == "api":
         from neurograph.agent.backends import ApiLLM

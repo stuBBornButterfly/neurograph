@@ -32,7 +32,7 @@ fi
 if [ "$FROM" -le 50 ]; then
   step build_study_graph; step run_graph_queries
 fi
-if [ "$FROM" -le 60 ]; then  # Phase 6 + 8: The university intake, index, policy + literature graph, agent (notebook 60)
+if [ "$FROM" -le 60 ]; then  # Phase 6 + 8: university intake, index, policy + literature graph, agent (notebook 60)
   python -m pytest tests -q -p no:cacheprovider | tail -n 1
   step ingest_pages --refetch
   step build_index

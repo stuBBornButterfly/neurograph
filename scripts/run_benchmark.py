@@ -112,7 +112,7 @@ def main() -> None:
         else:
             answers, use = run_heldout(llm, test.user.tolist(), POLICY_SYSTEM)
             held[name] = (answers, pd.DataFrame(use))
-        # an outside API only gets public questions: The university policy (safety messages never reach a model)
+        # an outside API only gets public questions: university policy (safety messages never reach a model)
         g = [x for x in gold if not llm.external or x["route"] in ("policy",) or x["route"].startswith("safety")]
         llms = [llm] + ([research] if research else [])
         golds[name] = run_gold(build_agent(index, tools, llm, verifier, rag, research), llms, g)
@@ -160,7 +160,7 @@ def main() -> None:
     print(f"reference: {ref_cfg['name']} ({ref_cfg['kind']} API, external {ref_cfg['external']}) | graph "
           f"{'Neo4j' if driver else 'none'} | greedy decoding, one request at a time, same prompts and passages")
     with pd.option_context("display.width", 250, "display.max_columns", 30):
-        print(f"\nA. held-out university questions (n {len(test)}, {int(test.negative.sum())} with the answer removed; "
+        print(f"\nA. held-out policy questions (n {len(test)}, {int(test.negative.sum())} with the answer removed; "
               f"chunks never seen in training)\n{tab_h.to_string(index=False)}")
         print(f"\nB. agent end to end on the 24 gold questions (fact_ok / verified exclude the 6 safety messages)\n"
               f"{tab_g.to_string(index=False)}")

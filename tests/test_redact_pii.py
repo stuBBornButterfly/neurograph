@@ -3,7 +3,7 @@ import pytest
 from neurograph.ingest.redact_pii import build_analyzer, redact
 
 ENTITIES = ["PERSON", "EMAIL_ADDRESS", "PHONE_NUMBER"]
-KEEP = ["swd@university.example", "09666775577"]
+KEEP = ["swd@example.edu", "09666775577"]
 
 
 @pytest.fixture(scope="module")
@@ -12,11 +12,11 @@ def engine():
 
 
 def test_staff_directory_names_and_emails_removed(engine):
-    text = ("Farzana Akter Srabony\nPsychosocial Counsellor\nRoom No: 301\nEmail: farzana.srabony@university.example\n"
-            "Dr. Anisur Rahman\nProctor, university\nExt: 256\nEmail: anis@university.example")
+    text = ("Farzana Akter Srabony\nPsychosocial Counsellor\nRoom No: 301\nEmail: farzana.srabony@example.edu\n"
+            "Dr. Anisur Rahman\nProctor, University\nExt: 256\nEmail: anis@example.edu")
     out, counts = redact(text, engine, ENTITIES, KEEP)
-    assert "Srabony" not in out and "Anisur" not in out and "@university.example" not in out
-    assert "Psychosocial Counsellor" in out and "Room No: 301" in out and "Proctor, university" in out  # roles stay
+    assert "Srabony" not in out and "Anisur" not in out and "@example.edu" not in out
+    assert "Psychosocial Counsellor" in out and "Room No: 301" in out and "Proctor, University" in out  # roles stay
     assert counts == {"PERSON": 2, "EMAIL_ADDRESS": 2}
 
 
@@ -26,8 +26,8 @@ def test_bangladeshi_mobile_removed_office_line_kept(engine):
 
 
 def test_office_email_kept(engine):
-    out, _ = redact("Write to swd@university.example for an appointment.", engine, ENTITIES, KEEP)
-    assert "swd@university.example" in out
+    out, _ = redact("Write to swd@example.edu for an appointment.", engine, ENTITIES, KEEP)
+    assert "swd@example.edu" in out
 
 
 def test_rules_text_untouched(engine):

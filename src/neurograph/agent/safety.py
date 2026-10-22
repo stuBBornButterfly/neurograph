@@ -27,12 +27,12 @@ def check(message: str) -> str | None:
 def referral(level: str, services: list[dict]) -> str:
     # fixed wording, contacts come from the graph (Service nodes), never from the language model
     where = "\n".join(f"- {s['name']}, {s['location']}, {s['contact']} ({s['url']})" for s in services) or \
-        "- university Department of Students' Welfare"
+        "- Department of Students' Welfare"
     if level == "crisis":
         return ("I'm really sorry you're feeling this way. You deserve support right now, and you don't have to "
                 "handle this alone.\n\nIf you are in immediate danger or might act on these thoughts, call **999** "
                 "(Bangladesh national emergency) or go to the nearest hospital emergency department now, and if you "
-                "can, tell someone you trust who is nearby.\n\nAt university you can talk in confidence to the "
+                "can, tell someone you trust who is nearby.\n\nYou can talk in confidence to the university's "
                 f"psychosocial counsellors:\n{where}\n\nI'm an information assistant, not a counsellor, so I can't "
                 "give the support you need, but these people can.")
     return ("That sounds hard, and it's good that you reached out. Many students go through stress like this, "

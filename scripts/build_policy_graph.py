@@ -30,7 +30,7 @@ def main() -> None:
          "refers_to": write_batches(driver, lp.REFERS, refers, 500),
          "rules": write_batches(driver, lp.RULES, rules, 500)}
 
-    print(f"== step 6.3 university policy graph | commit {git_hash()} ==")
+    print(f"== step 6.3 policy graph | commit {git_hash()} ==")
     print("rows sent: " + " | ".join(f"{k} {v}" for k, v in n.items()))
     counts = run(driver, """MATCH (n) WHERE n:Document OR n:Policy OR n:Service OR n:Rule OR n:Condition
                             RETURN labels(n)[0] AS label, count(*) AS n ORDER BY label""")

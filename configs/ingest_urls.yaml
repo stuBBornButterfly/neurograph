@@ -1,4 +1,4 @@
-# Phase 6: public university pages for the student-support assistant
+# Phase 6: the university's public pages for the student-support assistant (site name and URL: private settings SITE_*)
 # status: proposed -> Ayesha approves before anything is downloaded for ingestion
 # checked 2026-10-20: every URL returns 200; robots.txt returns 404 (no crawl rules), so we stay polite
 status: approved                 # Ayesha, 2026-10-20 ("do what is best" after reviewing the proposed list)
@@ -9,41 +9,41 @@ crawl:
   keep: [url, title, retrieved_at, sha256]
 pii:
   redact: [PERSON, EMAIL_ADDRESS, PHONE_NUMBER]   # staff names and personal emails/phones removed at ingestion
-  keep_office_contacts: [ccc@university.example, swd@university.example, info@university.example, "09666775577"]   # role-based, needed for referrals
+  keep_office_contacts: ["ccc@${SITE_DOMAIN}", "swd@${SITE_DOMAIN}", "info@${SITE_DOMAIN}", "09666775577"]   # role-based, needed for referrals
 
 pages:
   academic_rules:              # grading, CGPA, probation, dismissal, retake, withdrawal, leave of absence
-    - https://www.university.example/grades-rules-and-regulations
-    - https://www.university.example/student-rules-regulation
-    - https://www.university.example/academic-calendar
-    - https://www.university.example/faq
-    - https://www.university.example/students-helpdesk
+    - ${SITE_URL}/grades-rules-and-regulations
+    - ${SITE_URL}/student-rules-regulation
+    - ${SITE_URL}/academic-calendar
+    - ${SITE_URL}/faq
+    - ${SITE_URL}/students-helpdesk
   fees_and_aid:
-    - https://www.university.example/undergraduate-tuition-fees
-    - https://www.university.example/scholarships-financial-aid
+    - ${SITE_URL}/undergraduate-tuition-fees
+    - ${SITE_URL}/scholarships-financial-aid
   policies:                    # conduct and integrity
-    - https://www.university.example/university-policies
-    - https://www.university.example/storage/app/media/Policies/Disciplinary%20Policy.pdf
-    - https://www.university.example/storage/app/media/Policies/Plagiarism%20Policy.pdf
-    - https://www.university.example/storage/app/media/Policies/Artificial%20Intelligence%20Policy.pdf
-    - https://www.university.example/storage/app/media/Policies/Grievance%20Policy_2.pdf
-    - https://www.university.example/storage/app/media/Policies/Equity%20Diversity%20and%20Inclusion%20Policy.pdf
+    - ${SITE_URL}/${SITE_SLUG}-policies
+    - ${SITE_URL}/storage/app/media/Policies/Disciplinary%20Policy.pdf
+    - ${SITE_URL}/storage/app/media/Policies/Plagiarism%20Policy.pdf
+    - ${SITE_URL}/storage/app/media/Policies/Artificial%20Intelligence%20Policy.pdf
+    - ${SITE_URL}/storage/app/media/Policies/Grievance%20Policy_2.pdf
+    - ${SITE_URL}/storage/app/media/Policies/Equity%20Diversity%20and%20Inclusion%20Policy.pdf
   support_services:            # where the safety node refers students
-    - https://www.university.example/career-counseling-center                    # Dept. of Students' Welfare: "mental health and wellbeing"
-    - https://www.university.example/admin-office/office-of-the-students-welfare # psychosocial counsellors, Room 301
-    - https://www.university.example/admin-office/university-medical-centre
-    - https://www.university.example/admin-office/office-of-the-proctor
+    - ${SITE_URL}/career-counseling-center                    # Dept. of Students' Welfare: "mental health and wellbeing"
+    - ${SITE_URL}/admin-office/office-of-the-students-welfare # psychosocial counsellors, Room 301
+    - ${SITE_URL}/admin-office/${SITE_SLUG}-medical-centre
+    - ${SITE_URL}/admin-office/office-of-the-proctor
   offices:                     # who handles what
-    - https://www.university.example/admin-office/office-of-the-registrar
-    - https://www.university.example/admin-office/office-of-the-controller-of-examination
+    - ${SITE_URL}/admin-office/office-of-the-registrar
+    - ${SITE_URL}/admin-office/office-of-the-controller-of-examination
 
 skipped:                       # approved but not ingested
-  - {url: "https://ccc.university.example/", reason: "JavaScript-only page; plain download is an empty shell"}
-  - {url: "https://ccc.university.example/ccc-faq", reason: "JavaScript-only page"}
-  - {url: "https://ccc.university.example/ccc_contact_us", reason: "JavaScript-only page"}
-  - {url: "https://www.university.example/university-sexual-harassment-elimination-and-prevention-policy", reason: "no text, only links to sub-pages"}
+  - {url: "https://ccc.${SITE_DOMAIN}/", reason: "JavaScript-only page; plain download is an empty shell"}
+  - {url: "https://ccc.${SITE_DOMAIN}/ccc-faq", reason: "JavaScript-only page"}
+  - {url: "https://ccc.${SITE_DOMAIN}/ccc_contact_us", reason: "JavaScript-only page"}
+  - {url: "${SITE_URL}/${SITE_SLUG}-sexual-harassment-elimination-and-prevention-policy", reason: "no text, only links to sub-pages"}
 
-clean:                         # university page layout
+clean:                         # the site's page layout
   start_prefix: "Home/"        # main content starts after the breadcrumb
   stop_markers: ["To continue our founding mission", "Admin Office"]   # footer / side menu
 chunk:
